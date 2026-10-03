@@ -1,0 +1,1295 @@
+<title>RkTopNG Desktop</title>
+<meta name="description" content="Desktop mockup of the RkTopNG dashboard for the CM3588 (RK3588).">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    color-scheme: dark;
+    --page:#05080b; --bg:#0a0e13; --surface:#121b24; --inset:#0e161e;
+    --border:#1e2a35; --border-2:#2a3948;
+    --text:#e8eef4; --muted:#8a97a5; --faint:#5c6875;
+    --accent:#34d0bd; --good:#46c25a; --warn:#e6b34a; --orange:#eb8b3a; --crit:#f2564d; --info:#5aa2f0;
+    --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+    --sans:"IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    --r:14px; --r-sm:9px;
+  }
+  *{box-sizing:border-box}
+  body{ margin:0; background:var(--page); color:var(--text); font-family:var(--sans); font-size:14px; line-height:1.45;
+    background-image:radial-gradient(600px 400px at 50% -5%, #12222c 0%, transparent 60%); }
+  .mono{ font-family:var(--mono); font-variant-numeric:tabular-nums; }
+
+  /* header */
+  .hdr{ padding:16px 14px 12px; background:linear-gradient(180deg, rgba(18,27,36,.9), rgba(10,14,19,.6)); border-bottom:1px solid var(--border); }
+  .hrow{ display:flex; align-items:center; gap:10px; }
+  .logo{ width:34px; height:34px; object-fit:contain; flex:0 0 auto; }
+  .hrow .nm{ min-width:0; }
+  .hrow b{ font-size:17px; font-weight:700; letter-spacing:.2px; display:block; }
+  .hrow .sub{ font-size:11px; color:var(--muted); line-height:1.35; }
+  .hrow .sub .board{ color:var(--text); }
+  .live{ align-self:flex-start; margin-left:auto; text-align:right; font-size:11px; color:var(--muted); flex:0 0 auto; }
+  .live .lrow{ display:inline-flex; align-items:center; gap:6px; }
+  .live .rr{ color:var(--faint); font-family:var(--mono); font-size:10.5px; }
+  /* HEADER2 — uptime / kernel / OS (equispaced across the full width) */
+  .hinfo{ display:flex; flex-wrap:wrap; justify-content:space-between; gap:9px 10px; margin-top:12px; padding-top:11px; border-top:1px solid var(--border); }
+  .hinfo .it{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .hinfo .k{ font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  .hinfo .v{ font-family:var(--mono); font-size:11.5px; color:var(--text); }
+  .dot{ width:8px; height:8px; border-radius:50%; background:var(--good); animation:pulse 2.4s infinite; }
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(70,194,90,.45)}70%{box-shadow:0 0 0 6px rgba(70,194,90,0)}100%{box-shadow:0 0 0 0 rgba(70,194,90,0)}}
+  /* QUICK_LOOKUP gauges — open-bottom arc (CasaOS style), label sits in the gap */
+  .gauges{ display:flex; gap:7px; padding:15px 0 2px; }
+  .gwrap{ flex:1; min-width:0; }
+  .gauge{ position:relative; width:100%; max-width:132px; aspect-ratio:1; margin:0 auto; }
+  .gauge svg{ width:100%; height:100%; display:block; }
+  .gauge .trk{ fill:none; stroke:#33475b; stroke-width:9; stroke-linecap:round; }
+  .gauge .arc{ fill:none; stroke-width:9; stroke-linecap:round; transition:stroke-dasharray .5s ease, stroke .4s ease; }
+  .gauge .num{ position:absolute; left:0; right:0; top:50%; transform:translateY(-50%); text-align:center; line-height:1; }
+  .gauge .num .vv{ position:relative; display:inline-block; }
+  .gauge .num b{ font-family:var(--mono); font-size:21px; font-weight:600; letter-spacing:-.5px; }
+  .gauge .num .vv i{ position:absolute; left:100%; top:1px; margin-left:1.5px;
+    font-family:var(--mono); font-size:13px; font-weight:600; font-style:normal; color:var(--muted); }
+  .gname{ position:absolute; left:0; right:0; bottom:8%; text-align:center;
+    font-size:12.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--text); font-weight:700; }
+  /* QUICK_LOOK fan tile — thermal-zone style, no stripe, 0–100% scale */
+  .ftile{ height:94px; margin:14px 8px 2px; }
+  .ftile .big .u{ font-size:11px; color:var(--muted); margin-left:2px; }
+  .ftile .fspark{ position:absolute; top:0; left:0; width:100%; height:100%; display:block; }
+
+  section{ margin-top:14px; }
+  .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:14px; }
+  .chead{ display:flex; align-items:center; justify-content:space-between; min-height:23px; margin-bottom:12px; }
+  .chead h3{ margin:0; font-size:12px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); font-weight:600; }
+  .chead h3 small{ font-size:inherit; font-weight:400; letter-spacing:.03em; text-transform:none; color:var(--faint); }   /* qualifier next to a title, e.g. (R+W) */
+  .badge{ font-family:var(--mono); font-size:11px; color:var(--muted); background:var(--inset); border:1px solid var(--border-2); border-radius:20px; padding:3px 10px; }
+
+  .grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .dtile{ padding:10px 12px; }
+  .dtile .l{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .dtile .s{ display:flex; justify-content:space-between; gap:6px; white-space:nowrap; }   /* bus left, disk size right */
+  .dtile .big .u{ font-size:11px; color:var(--muted); margin-left:1px; }
+  .dtile.na .big{ color:var(--faint); }
+  .stat{ background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:11px 13px; position:relative; overflow:hidden; }
+  .stat .l{ font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+  .stat .big{ font-family:var(--mono); font-size:24px; font-weight:500; margin-top:2px; letter-spacing:-.5px; }
+  .stat .s{ font-size:10.5px; color:var(--faint); font-family:var(--mono); }
+  .stat canvas{ position:absolute; right:0; bottom:0; width:100%; height:26px; opacity:.85; }
+  .stripe{ position:absolute; left:0; top:0; bottom:0; width:3px; }
+
+  .row{ display:grid; grid-template-columns:58px 1fr auto; align-items:center; gap:9px; margin:7px 0; }
+  .row .n{ font-family:var(--mono); font-size:11.5px; color:var(--muted); }
+  .row .n b{ color:var(--text); }
+  .track{ height:7px; border-radius:6px; background:var(--inset); overflow:hidden; }
+  .fill{ height:100%; border-radius:6px; width:0; transition:width .5s ease; background:var(--good); }
+  .row .val{ font-family:var(--mono); font-size:11.5px; color:var(--muted); text-align:right; }
+  .row .val b{ color:var(--text); }
+  .clu{ font-size:9px; color:var(--faint); }
+
+  /* CPU section — governor pill, clusters split by a divider, vertical cluster label */
+  .badge b{ color:var(--text); font-weight:500; }   /* pill value (e.g. governor, total) brighter */
+  .cgroup{ display:flex; align-items:stretch; gap:11px; padding:11px 0; border-top:1px solid var(--border-2); }
+  .cgroup:first-child{ padding-top:2px; border-top:0; }
+  .cgroup:last-child{ padding-bottom:0; }
+  /* group label: an ordinary horizontal box stretched to the group's height; the vertical text sits in an inner span that flex centres.
+     (A vertical writing-mode box that must stretch + text-align:center is fragile: Firefox can leave the text at the top after a reflow.) */
+  .clabel{ flex:0 0 14px; display:flex; align-items:center; justify-content:center; }
+  .clabel > span{ writing-mode:vertical-rl; transform:rotate(180deg); white-space:nowrap; line-height:1;
+    font-family:var(--mono); font-size:10px; letter-spacing:.1em; color:var(--muted); font-weight:600; }
+  .crows{ flex:1; min-width:0; }
+  .crows .row{ grid-template-columns:auto 1fr auto; }   /* name hugs its text: equal gap on both sides of the bar */
+  .crows .row:first-child{ margin-top:0; }
+  .crows .row:last-child{ margin-bottom:0; }
+  /* aligned value columns: usage (3ch) + % + freq (8ch), tabular figures */
+  .crows .row .val{ display:inline-flex; align-items:baseline; justify-content:flex-end; font-variant-numeric:tabular-nums; }
+  .crows .row .val .cusg{ display:inline-block; width:3ch; text-align:right; color:var(--text); }
+  .crows .row .val .pct{ color:var(--muted); margin-left:2px; }
+  .crows .row .val .vsep{ color:var(--faint); margin:0 6px; }
+  .crows .row .track{ background:#33475b; }   /* same track color as the QUICK_LOOKUP gauges */
+  /* CPU load breakdown chart (stacked area to 100%) + legend */
+  .cpuchart{ width:100%; height:96px; display:block; background:var(--inset); border:1px solid var(--border-2); border-radius:11px; }   /* same border/radius as .mtile */
+  .clegend{ display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:12px; }
+  .clegend .li{ display:inline-flex; align-items:center; gap:7px; font-size:12px; color:var(--muted); }
+  .clegend .sw{ width:10px; height:10px; border-radius:3px; flex:0 0 auto; }
+  .clegend b{ font-family:var(--mono); color:var(--text); font-weight:500; }
+  .crows .row .val .cfreq{ display:inline-block; width:8ch; text-align:right; color:var(--faint); }
+  #accgroups .row{ grid-template-columns:66px 1fr auto; }   /* fixed name col so bars align across NPU/VPU/RGA/GPU (fits Mali-G610) */
+  .cgroup.stack{ display:block; }                       /* VPU: main rows block + extra block stacked */
+  .cgmain{ display:flex; align-items:stretch; gap:11px; }/* clabel stays centred on the 4 main rows */
+  .cgextra{ padding-left:25px; }                         /* align under the rows (clabel 14 + gap 11) */
+  .vexprow{ display:flex; justify-content:center; padding:8px 0; }
+  .vexp{ flex:0 0 auto; width:24px; height:24px; border-radius:50%; padding:0; cursor:pointer;
+    border:1px solid var(--border-2); background:var(--inset); color:var(--muted); display:grid; place-items:center; }
+  .vexp .p{ font-size:19px; line-height:1; font-weight:400; display:block; transition:transform .25s ease; }
+  .vexp.open{ color:var(--accent); border-color:var(--accent); }
+  .vexp.open .p{ transform:rotate(135deg); }   /* "+" spins into "×" */
+  /* accelerator multi-line charts */
+  /* accelerator LOAD charts: rounded tile, name+legend in the reserved top band (1/5), curves below */
+  .mblock{ margin-top:16px; }
+  .mblock:first-child{ margin-top:0; }
+  .mtile{ position:relative; background:var(--inset); border:1px solid var(--border-2); border-radius:11px; height:94px; overflow:hidden; }
+  .mtile canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .mname{ position:absolute; top:0; left:10px; height:20%; display:flex; align-items:center; z-index:1;
+    font-family:var(--mono); font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text); }
+  .mname i{ margin-left:8px; font-style:normal; font-weight:400; text-transform:none; letter-spacing:0; font-size:10.5px; color:var(--faint); }   /* driver version next to a tile name */
+  .mleg{ position:absolute; top:0; right:10px; height:20%; z-index:1; display:flex; align-items:center; gap:10px; justify-content:flex-end; max-width:calc(100% - 64px); }
+  .mleg .lg{ display:inline-flex; align-items:center; gap:5px; font-family:var(--mono); font-size:10px; color:var(--muted); white-space:nowrap; }
+  .mleg .lg i{ width:11px; height:3px; border-radius:2px; flex:0 0 auto; }
+
+  /* thermal zones — full-width rows styled like the overview tiles */
+  .zrows{ display:flex; flex-direction:column; gap:10px; }
+  .zrow{ height:76px; background:var(--inset); }
+  .zrow .stripe{ width:5px; }
+  .zrow .zspark{ height:100%; top:0; left:7px; right:auto; width:calc(100% - 7px); }   /* fills tile; 5px stripe + 2px gap */
+  .zrow .big .u{ font-size:11px; color:var(--muted); margin-left:1px; }
+  .stat .l, .stat .big, .stat .s{ position:relative; z-index:1; }   /* keep text above the bg sparkline */
+
+  .memline{ display:flex; justify-content:space-between; font-size:12px; margin-top:8px; }
+  .memline .mono{ color:var(--muted); }
+  .memline b{ color:var(--text); font-weight:500; }
+  /* MEMORY card rows (Swap / DDR Control / CMA) */
+  #memrows .row{ grid-template-columns:62px 1fr auto; }
+  #memrows .row .track{ background:#33475b; }
+  #memrows .row .val{ display:inline-flex; align-items:baseline; justify-content:flex-end; font-variant-numeric:tabular-nums; }
+  #memrows .row .val .mp{ display:inline-block; width:4ch; text-align:right; color:var(--muted); }
+  #memrows .row .val .mp b{ color:var(--text); margin-right:2px; }
+  #memrows .row .val .vsep{ color:var(--faint); margin:0 6px; }
+  #memrows .row .val .x{ display:inline-block; width:9ch; text-align:right; color:var(--faint); }
+
+  /* storage — capacity + disk I/O rows reuse the CPU/accelerator group layout (clabel + bar + usage | value) */
+  #stgroups .row, #iogroups .row{ grid-template-columns:66px 1fr auto; }
+  #stgroups .crows .row .val .cfreq, #iogroups .crows .row .val .cfreq{ width:9ch; }
+  .crows.one{ display:flex; flex-direction:column; justify-content:center; }   /* single-row group: row centred on the vertical label */
+  .mleg .lg b{ color:var(--text); font-weight:500; }
+
+  /* network: one tile per interface, chart with download + upload lines */
+  .netcard{ background:var(--inset); border:1px solid var(--border); border-radius:var(--r-sm); padding:11px 12px; }
+  .netcard .ifn{ font-family:var(--mono); font-size:12px; color:var(--text); display:flex; justify-content:space-between; }
+  .netcard .ifn .ift{ color:var(--faint); }
+  .netcard canvas{ width:100%; height:48px; display:block; margin:7px 0; }
+  .netcard .rt{ display:flex; align-items:baseline; gap:12px; font-family:var(--mono); font-size:12px; }
+  .netcard .rt .dn{ color:var(--info); } .netcard .rt .up{ color:var(--accent); }
+  .netcard .rt .dn b, .netcard .rt .up b{ font-weight:600; }
+  .netcard .rt .un{ color:var(--faint); margin-left:auto; }
+
+  .foot{ text-align:center; color:var(--faint); font-size:11px; margin-top:16px; padding:0 6px; }
+
+  [hidden]{ display:none !important; }   /* local preview only: the published artifact skeleton already has this rule */
+
+  /* ===================== DESKTOP LAYOUT ===================== */
+  /* sticky top bar: brand | uptime/kernel/os | live */
+  .topbar{ position:sticky; top:0; z-index:20; background:rgba(10,14,19,.86); backdrop-filter:blur(10px); border-bottom:1px solid var(--border); }
+  .topbar .in{ max-width:1280px; margin:0 auto; padding:12px 20px; display:flex; align-items:center; gap:12px 32px; flex-wrap:wrap; }
+  .topbar .hinfo{ margin:0 0 0 auto; padding:0; border:0; gap:32px; flex-wrap:nowrap; justify-content:flex-end; }
+  .topbar .live{ align-self:center; margin:0; }
+  .wrap{ max-width:1280px; margin:0 auto; padding:0 20px 36px; }
+
+  /* 12-column grid: every row sums to 12 */
+  .grid{ display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:14px; margin-top:16px; }
+  .s4{ grid-column:span 4; } .s5{ grid-column:span 5; } .s6{ grid-column:span 6; } .s7{ grid-column:span 7; } .s8{ grid-column:span 8; } .s12{ grid-column:span 12; }
+  .grid > .card{ min-width:0; display:flex; flex-direction:column; }   /* cards of a row share the same height */
+  @media(max-width:1100px){ .s4,.s5,.s7,.s8{ grid-column:span 6; } }
+  @media(max-width:760px){ .s4,.s5,.s6,.s7,.s8{ grid-column:span 12; } }
+
+  /* section separator: the section's icon (same as the mobile tab) + a horizontal rule to the right edge; no text, the name is only in title/aria-label */
+  .sechead{ grid-column:1 / -1; display:flex; align-items:center; gap:10px; margin-top:16px; }
+  .sechead:first-child{ margin-top:0; }
+  .sechead svg{ width:18px; height:18px; flex:0 0 auto; color:var(--accent); fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+  .sechead::after{ content:''; flex:1; height:1px; background:var(--border-2); }
+
+  /* Overview: gauges + fan (left) and the 3x2 disk-temperature tiles (right), same height */
+  .qcard .gauges{ padding:6px 0 2px; }
+  .qcard .ftile{ margin:14px 6px 2px; }
+  .ovwrap{ display:grid; }
+  .ovwrap .grid3{ grid-template-rows:1fr 1fr; }
+  .dtile{ display:flex; flex-direction:column; padding:14px 16px; }
+  .dtile .big{ font-size:30px; }
+  .dtile .big .u{ font-size:13px; }
+  .dtile .s{ margin-top:auto; font-size:11px; }
+
+  /* Storage card: label-only summary of the system's disks (name, bus, size) under the volumes, one more "group" after a divider */
+  .dsum{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:11px; padding-top:13px; border-top:1px solid var(--border-2); }
+  /* each chip is a real <button> (keyboard-focusable); what it opens is still to be defined, so for now it only has hover/focus/pressed states */
+  .dchip{ appearance:none; display:block; width:100%; min-width:0; margin:0; font:inherit; color:inherit; text-align:left; cursor:pointer;
+    background:var(--inset); border:1px solid var(--border); border-radius:var(--r-sm); padding:8px 10px; transition:border-color .15s, background-color .15s; }
+  .dchip::-moz-focus-inner{ border:0; padding:0; }
+  .dchip:hover{ border-color:var(--accent); background:rgba(52,208,189,.07); }
+  .dchip:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .dchip:active{ transform:translateY(1px); }
+  .dchip .l{ display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .dchip .s{ display:flex; justify-content:space-between; gap:6px; margin-top:2px; font-family:var(--mono); font-size:11px; color:var(--faint); white-space:nowrap; }
+  .dchip .s span:last-child{ color:var(--text); }
+  .dchip .m{ display:block; margin-top:5px; font-family:var(--mono); font-size:10.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  @media (prefers-reduced-motion: reduce){ .dchip{ transition:none; } }
+
+  /* breakdown charts grow with the row (canvas lives in an absolutely-positioned wrapper so its bitmap size can't feed back into the layout) */
+  .cwrap{ position:relative; flex:1; min-height:96px; }
+  .cwrap .cpuchart{ position:absolute; inset:0; width:100%; height:100%; }
+  .clegend{ margin-top:14px; }
+
+  /* stacked chart tiles fill their card */
+  #cpucharts, #iocharts{ flex:1; display:flex; flex-direction:column; gap:16px; }
+  #cpucharts .mblock, #iocharts .mblock{ flex:1; margin:0; }
+  #cpucharts .mtile, #iocharts .mtile{ height:100%; min-height:94px; }
+  /* accelerator LOAD charts: 2x2 */
+  #acccharts{ flex:1; display:grid; grid-template-columns:1fr 1fr; grid-auto-rows:minmax(110px,1fr); gap:16px; }
+  #acccharts .mblock{ margin:0; }
+  #acccharts .mtile{ height:100%; }
+
+  /* thermal zones / disk temperature: tile grids (every thermal tile has the same width; the 7th just leaves the last cell empty) */
+  .zrows{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  @media(max-width:1100px){ .zrows{ grid-template-columns:repeat(2,1fr); } }
+  @media(max-width:760px){ .zrows{ grid-template-columns:1fr; } }
+  #dtemps{ grid-template-columns:repeat(3,1fr); }                                  /* 5 drives: 3 + 2, same tile width, last cell left empty */
+  @media(max-width:760px){ #dtemps{ grid-template-columns:repeat(2,1fr); } }
+
+  /* network: two tiles side by side */
+  .netwrap{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .netcard canvas{ height:64px; }
+  @media(max-width:760px){ .netwrap{ grid-template-columns:1fr; } }
+
+  /* processes: btop-like table, clickable headers */
+  table.ptable{ width:100%; border-collapse:collapse; table-layout:fixed; font-family:var(--mono); font-size:12.5px; }
+  .ptable th{ text-align:left; font-weight:500; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--faint); padding:0 10px 9px; white-space:nowrap; user-select:none; }
+  .ptable th[data-k]{ cursor:pointer; }
+  .ptable th[data-k]:hover{ color:var(--muted); }
+  .ptable th.on{ color:var(--accent); }
+  .ptable th .ar{ display:inline-block; width:1em; margin-left:3px; }
+  .ptable td{ padding:7px 10px; border-top:1px solid var(--border); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ptable .r{ text-align:right; }
+  .ptable td.pid{ color:var(--faint); } .ptable td.prog{ color:var(--text); font-weight:600; }
+  .ptable td.cmd{ color:var(--faint); } .ptable td.user{ color:var(--muted); } .ptable td.num{ color:var(--muted); }
+  .ptable tbody tr:hover td{ background:var(--inset); }
+  .ptable col.c-pid{ width:76px; } .ptable col.c-prog{ width:180px; } .ptable col.c-user{ width:96px; }
+  .ptable col.c-thr{ width:60px; } .ptable col.c-mem{ width:84px; } .ptable col.c-cpu{ width:78px; }
+  @media(max-width:760px){ .ptable col.c-prog{ width:130px; } .ptable th:nth-child(3), .ptable td.cmd{ display:none; } }
+
+  /* ===================== S.M.A.R.T. WINDOW (opened by the disk buttons in the Disk I/O card) ===================== */
+  /* eMMC has no S.M.A.R.T.: its tile looks like the others and does nothing; hover or keyboard focus says why */
+  .dchip[aria-disabled="true"]{ position:relative; cursor:default; }
+  .dchip[aria-disabled="true"]:hover{ border-color:var(--border); background:var(--inset); }
+  .dchip[aria-disabled="true"]:active{ transform:none; }
+  .dchip[data-tip]::after{ content:attr(data-tip); position:absolute; z-index:5; left:50%; bottom:calc(100% + 6px); transform:translateX(-50%); width:max-content; max-width:240px;
+    padding:6px 10px; background:var(--surface); border:1px solid var(--border-2); border-radius:var(--r-sm); box-shadow:0 8px 24px rgba(0,0,0,.5);
+    color:var(--text); font:400 11.5px/1.4 var(--sans); letter-spacing:0; text-transform:none; white-space:normal; pointer-events:none; opacity:0; visibility:hidden; transition:opacity .12s; }
+  .dchip[data-tip]:hover::after, .dchip[data-tip]:focus::after{ opacity:1; visibility:visible; }
+  @media (prefers-reduced-motion: reduce){ .dchip[data-tip]::after{ transition:none; } }
+  .mback{ position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center; padding:4vh 20px;
+    background:rgba(3,6,9,.74); backdrop-filter:blur(3px); }
+  .modal{ width:100%; max-width:1000px; max-height:92vh; display:flex; flex-direction:column; background:var(--bg);
+    border:1px solid var(--border-2); border-radius:var(--r); box-shadow:0 24px 80px rgba(0,0,0,.65); }
+  .mhead{ flex:0 0 auto; display:flex; align-items:center; gap:14px; padding:15px 20px; background:var(--surface);
+    border-bottom:1px solid var(--border); border-radius:var(--r) var(--r) 0 0; }
+  .mid{ min-width:0; }
+  .mhead h2{ margin:0; display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 10px; font-size:17px; font-weight:700; letter-spacing:.2px; }
+  .mhead h2 .mmodel{ font-size:14px; font-weight:500; color:var(--muted); }
+  .msub{ margin-top:3px; font-family:var(--mono); font-size:11.5px; color:var(--muted); }
+  .hbadge{ margin-left:auto; flex:0 0 auto; display:inline-flex; align-items:center; gap:7px; padding:5px 13px; border-radius:20px; border:1px solid;
+    font-family:var(--mono); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.07em; }
+  .hbadge i{ width:8px; height:8px; border-radius:50%; background:currentColor; }
+  .hbadge.ok{ color:var(--good); border-color:rgba(70,194,90,.4); background:rgba(70,194,90,.08); }
+  .hbadge.warn{ color:var(--warn); border-color:rgba(230,179,74,.45); background:rgba(230,179,74,.09); }
+  .hbadge.crit{ color:var(--crit); border-color:rgba(242,86,77,.5); background:rgba(242,86,77,.1); }
+  .mclose{ appearance:none; flex:0 0 auto; width:30px; height:30px; padding:0; border-radius:50%; cursor:pointer; font:inherit; font-size:20px; line-height:1;
+    border:1px solid var(--border-2); background:var(--inset); color:var(--muted); display:grid; place-items:center; }
+  .mclose:hover{ color:var(--text); border-color:var(--accent); }
+  .mclose:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .mbody{ flex:1; min-height:0; overflow-y:auto; padding:18px 20px 16px; }
+
+  .verdict{ padding:11px 14px; margin-bottom:14px; border-radius:var(--r-sm); border:1px solid; font-size:12.5px; }
+  .verdict.ok{ border-color:rgba(70,194,90,.3); background:rgba(70,194,90,.06); }
+  .verdict.warn{ border-color:rgba(230,179,74,.35); background:rgba(230,179,74,.07); }
+  .verdict.crit{ border-color:rgba(242,86,77,.4); background:rgba(242,86,77,.08); }
+  .verdict ul{ margin:0; padding:0; list-style:none; }
+  .verdict li{ display:flex; align-items:baseline; gap:9px; }
+  .verdict li + li{ margin-top:4px; }
+  .verdict li i{ flex:0 0 auto; width:7px; height:7px; border-radius:50%; transform:translateY(-1px); }
+  .verdict .vsub{ margin-top:6px; color:var(--faint); font-size:11.5px; }
+
+  .sgrid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+  .sgrid .stat .big .u{ font-size:13px; color:var(--muted); margin-left:2px; }
+  .sgrid .stat .s{ margin-top:1px; line-height:1.35; }
+  @media(max-width:860px){ .sgrid{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+  .mcols{ display:grid; grid-template-columns:5fr 7fr; gap:14px; margin-top:14px; }
+  @media(max-width:860px){ .mcols{ grid-template-columns:1fr; } }
+  .kv{ display:grid; grid-template-columns:auto minmax(0,1fr); gap:8px 18px; margin:0; font-size:12.5px; }
+  .kv dt{ color:var(--muted); white-space:nowrap; }
+  .kv dd{ margin:0; text-align:right; min-width:0; font-family:var(--mono); font-size:12px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .kv dd.dim{ color:var(--faint); }
+  .kv dd.rich{ overflow:visible; }   /* a value with explained units: the tooltip must not be clipped by the single-line box */
+  .kv .tip{ position:relative; cursor:help; border-bottom:1px dotted var(--faint); }
+  .kv .tip:hover, .kv .tip:focus{ outline:0; border-bottom-color:var(--muted); }
+  .kv .tip::after{ content:attr(data-tip); position:absolute; z-index:5; top:calc(100% + 4px); right:0; width:max-content; max-width:270px;
+    padding:8px 10px; background:var(--surface); border:1px solid var(--border-2); border-radius:var(--r-sm); box-shadow:0 8px 24px rgba(0,0,0,.5);
+    color:var(--text); font:400 11.5px/1.45 var(--sans); text-align:left; white-space:normal; pointer-events:none; opacity:0; visibility:hidden; transition:opacity .12s; }
+  .kv .tip:hover::after, .kv .tip:focus::after{ opacity:1; visibility:visible; }
+  @media (prefers-reduced-motion: reduce){ .kv .tip::after{ transition:none; } }
+  .kv dd .sub{ display:block; margin-top:1px; font-size:10.5px; color:var(--faint); white-space:normal; }   /* a note under the value */
+  .mnote{ margin:12px 0 0; padding-top:11px; border-top:1px solid var(--border-2); font-size:11.5px; color:var(--faint); }
+  .mnote:empty{ display:none; }
+
+  .seg{ display:inline-flex; border:1px solid var(--border-2); border-radius:20px; overflow:hidden; }
+  .seg button{ appearance:none; margin:0; border:0; background:var(--inset); color:var(--muted); font:inherit; font-size:11px; padding:3px 12px; cursor:pointer; }
+  .seg button + button{ border-left:1px solid var(--border-2); }
+  .seg button.on{ background:rgba(52,208,189,.14); color:var(--accent); }
+  .seg button:focus-visible{ outline:2px solid var(--accent); outline-offset:-2px; }
+  table.stable{ width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12px; }
+  .stable th{ text-align:left; font-weight:500; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--faint); padding:0 10px 9px; white-space:nowrap; }
+  .stable th.r, .stable td.r{ text-align:right; }
+  /* column help: a tooltip on hover or keyboard focus (data-tip); right-aligned columns open towards the left so they stay inside the window */
+  .stable th[data-tip]{ position:relative; cursor:help; }
+  .stable th[data-tip] > span{ border-bottom:1px dotted var(--faint); }
+  .stable th[data-tip]:hover, .stable th[data-tip]:focus{ color:var(--muted); outline:0; }
+  .stable th[data-tip]::after{ content:attr(data-tip); position:absolute; z-index:5; top:calc(100% + 2px); left:0; width:max-content; max-width:270px;
+    padding:8px 10px; background:var(--surface); border:1px solid var(--border-2); border-radius:var(--r-sm); box-shadow:0 8px 24px rgba(0,0,0,.5);
+    color:var(--text); font:400 11.5px/1.45 var(--sans); letter-spacing:0; text-transform:none; white-space:normal; text-align:left; pointer-events:none; opacity:0; visibility:hidden; transition:opacity .12s; }
+  .stable th.r[data-tip]::after{ left:auto; right:0; }
+  .stable th[data-tip]:hover::after, .stable th[data-tip]:focus::after{ opacity:1; visibility:visible; }
+  @media (prefers-reduced-motion: reduce){ .stable th[data-tip]::after{ transition:none; } }
+  .stable td{ padding:8px 10px; border-top:1px solid var(--border); vertical-align:top; }
+  .stable td.st{ width:28px; padding-right:0; }
+  .stable td.id{ color:var(--faint); white-space:nowrap; }
+  .stable td.num{ color:var(--muted); white-space:nowrap; }
+  .stable td.num .hu{ display:block; margin-top:1px; font-size:10.5px; color:var(--faint); }
+  .stable td.nm{ font-family:var(--sans); font-size:13px; color:var(--text); }
+  .stable td.nm small{ display:block; margin-top:2px; font-size:11px; line-height:1.35; color:var(--faint); }
+  .stable tr:hover td{ background:var(--inset); }
+  .sdot{ display:inline-block; width:9px; height:9px; margin-top:4px; border-radius:50%; }
+  .tag{ margin-left:8px; padding:1px 6px; border:1px solid; border-radius:10px; vertical-align:middle;
+    font-family:var(--mono); font-size:9.5px; font-weight:500; text-transform:uppercase; letter-spacing:.06em; }
+  .tag{ white-space:nowrap; }
+  .tag.crit{ color:var(--accent); border-color:rgba(52,208,189,.4); }
+  .rules{ margin-top:14px; font-size:12px; color:var(--muted); }
+  .rules summary{ cursor:pointer; width:max-content; }
+  .rules summary:hover{ color:var(--text); }
+  .rules dl{ display:grid; grid-template-columns:auto minmax(0,1fr); gap:9px 18px; margin:10px 0 0; padding:12px 14px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-sm); }
+  .rules dt{ color:var(--text); font-weight:600; }
+  .rules dd{ margin:0; line-height:1.5; }
+  .rules b{ color:var(--text); font-weight:500; }
+  .notice{ margin:-4px 0 14px; padding:8px 12px; border:1px dashed var(--border-2); border-radius:var(--r-sm); font-size:11.5px; color:var(--muted); }
+  .stat.na .big{ color:var(--faint); font-size:20px; padding-top:4px; }
+  .stat.na .stripe{ background:var(--border-2) !important; }
+  .stat.na .s{ color:var(--faint); }
+  .seg button:disabled{ opacity:.4; cursor:default; }
+  .hwrap{ position:relative; }
+  .hsvg{ width:100%; height:96px; display:block; background:var(--inset); border:1px solid var(--border-2); border-radius:11px; }
+  .hy{ position:absolute; right:9px; font-family:var(--mono); font-size:10px; font-weight:600; color:var(--muted); }
+  .hy1{ top:6px; } .hy2{ bottom:6px; }
+  .haxis{ display:flex; justify-content:space-between; margin-top:7px; font-family:var(--mono); font-size:10.5px; color:var(--faint); }
+  .badge b{ color:var(--text); font-weight:500; }
+  .mfoot{ margin:14px 0 0; text-align:center; font-size:11px; color:var(--faint); }
+  /* mockup only: lets the reviewer see the Warning / Failing states on any disk (not part of the app) */
+  .demo{ flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:10px; padding:9px 20px;
+    background:var(--surface); border-top:1px dashed var(--border-2); border-radius:0 0 var(--r) var(--r); font-size:11px; color:var(--faint); }
+</style>
+
+<header class="topbar"><div class="in">
+  <div class="hrow">
+    <img class="logo" src="favicon.png" alt="RkTopNG logo">
+    <div class="nm">
+      <b>RkTopNG</b>
+      <div class="sub"><span class="board">FriendlyElec CM3588</span> · Rockchip RK3588</div>
+    </div>
+  </div>
+  <div class="hinfo">
+    <div class="it"><span class="k">uptime</span><span class="v" id="h_uptime">6d 22h 50m</span></div>
+    <div class="it"><span class="k">kernel</span><span class="v">6.1.141</span></div>
+    <div class="it"><span class="k">os</span><span class="v">Ubuntu 24.04.4 LTS</span></div>
+  </div>
+  <div class="live"><span class="lrow"><span class="dot"></span> live <span class="rr">- 1s</span></span></div>
+</div></header>
+
+<div class="wrap"><div class="grid">
+
+  <div class="sechead" role="separator" aria-label="Overview" title="Overview"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.3"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.3"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.3"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.3"/></svg></div>
+
+  <!-- QUICK_LOOKUP -->
+  <div class="card s5 qcard">
+    <div class="gauges">
+      <div class="gwrap"><div class="gauge"><svg viewBox="0 0 80 80"><circle class="trk" cx="40" cy="40" r="30" transform="rotate(150 40 40)"/><circle class="arc" id="g_soc" cx="40" cy="40" r="30" transform="rotate(150 40 40)"/></svg><div class="num"><span class="vv"><b data-g="soc">44</b><i>°C</i></span></div><div class="gname">SOC</div></div></div>
+      <div class="gwrap"><div class="gauge"><svg viewBox="0 0 80 80"><circle class="trk" cx="40" cy="40" r="30" transform="rotate(150 40 40)"/><circle class="arc" id="g_cpu" cx="40" cy="40" r="30" transform="rotate(150 40 40)"/></svg><div class="num"><span class="vv"><b data-g="cpu">3</b><i>%</i></span></div><div class="gname">CPU</div></div></div>
+      <div class="gwrap"><div class="gauge"><svg viewBox="0 0 80 80"><circle class="trk" cx="40" cy="40" r="30" transform="rotate(150 40 40)"/><circle class="arc" id="g_ram" cx="40" cy="40" r="30" transform="rotate(150 40 40)"/></svg><div class="num"><span class="vv"><b data-g="ram">28</b><i>%</i></span></div><div class="gname">RAM</div></div></div>
+    </div>
+    <div class="ftile stat">
+      <div class="l">fan</div>
+      <div class="big"><span data-t="fan">0</span><span class="u">%</span></div>
+      <div class="s" id="fanraw">0 / 255</div>
+      <canvas class="fspark" data-fs="fan"></canvas>
+    </div>
+  </div>
+
+  <!-- Overview: disk temperatures as plain tiles, 3 cols x 2 rows -->
+  <div class="s7 ovwrap"><div class="grid3" id="ovdisks"></div></div>
+
+  <div class="sechead" role="separator" aria-label="CPU" title="CPU"><svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5"/><path d="M10 3v3M14 3v3M10 18v3M14 18v3M3 10h3M3 14h3M18 10h3M18 14h3"/></svg></div>
+
+  <!-- CPU -->
+  <div class="card s4">
+    <div class="chead"><h3>CPU</h3><span class="badge" id="cpuavg">governor: <b>schedutil</b></span></div>
+    <div id="cores"></div>
+  </div>
+  <div class="card s4">
+    <div class="chead"><h3>Load</h3></div>
+    <div id="cpucharts"></div>
+  </div>
+  <div class="card s4">
+    <div class="chead"><h3>Load breakdown</h3></div>
+    <div class="cwrap"><canvas id="cpuchart" class="cpuchart"></canvas></div>
+    <div class="clegend">
+      <span class="li"><span class="sw" style="background:var(--info)"></span>user <b id="c_user">0%</b></span>
+      <span class="li"><span class="sw" style="background:var(--accent)"></span>system <b id="c_sys">0%</b></span>
+      <span class="li"><span class="sw" style="background:var(--warn)"></span>iowait <b id="c_io">0%</b></span>
+      <span class="li"><span class="sw" style="background:var(--faint)"></span>idle <b id="c_idle">0%</b></span>
+    </div>
+  </div>
+
+  <div class="sechead" role="separator" aria-label="Temperature" title="Temperature"><svg viewBox="0 0 24 24"><path d="M10 13.6V5a2 2 0 1 1 4 0v8.6a4 4 0 1 1-4 0z"/></svg></div>
+
+  <!-- Thermal -->
+  <div class="card s12">
+    <div class="chead"><h3>Thermal zones</h3></div>
+    <div class="zrows" id="thist"></div>
+  </div>
+
+  <div class="sechead" role="separator" aria-label="Accelerators" title="Accelerators"><svg viewBox="0 0 24 24"><path d="M13 2 4 13h6l-1 9 9-11h-6z"/></svg></div>
+
+  <!-- Accelerators -->
+  <div class="card s4">
+    <div class="chead"><h3>Accelerators</h3><span class="badge" id="vpusess">VPU 0 sess</span></div>
+    <div id="accgroups"></div>
+  </div>
+  <div class="card s8">
+    <div class="chead"><h3>Load</h3></div>
+    <div id="acccharts"></div>
+  </div>
+
+  <div class="sechead" role="separator" aria-label="Memory" title="Memory"><svg viewBox="0 0 24 24"><rect x="2.5" y="8" width="19" height="9" rx="1.5"/><path d="M6.5 8V5.8M10.5 8V5.8M14.5 8V5.8M18.5 8V5.8M6 17v2.2M18 17v2.2"/></svg></div>
+
+  <!-- Memory -->
+  <div class="card s6">
+    <div class="chead"><h3>Memory</h3><span class="badge">Avail: <b id="m_availpill">11.0G</b> - Total: <b>16 GB</b></span></div>
+    <div id="memrows">
+      <div class="row"><span class="n"><b>Swap</b></span><div class="track"><div class="fill" id="sw_bar" style="width:0%"></div></div><span class="val"><span class="mp"><b id="sw_pct">0</b>%</span><span class="vsep">|</span><span class="x">0K/0K</span></span></div>
+      <div class="row"><span class="n"><b>DDR Ctrl</b></span><div class="track"><div class="fill" id="dc_bar"></div></div><span class="val"><span class="mp"><b id="dc_pct">0</b>%</span><span class="vsep">|</span><span class="x" id="dc_x">528 MHz</span></span></div>
+      <div class="row"><span class="n"><b>CMA</b></span><div class="track"><div class="fill" id="cma_bar"></div></div><span class="val"><span class="mp"><b id="cma_pct">0</b>%</span><span class="vsep">|</span><span class="x" id="cma_x">14M/128M</span></span></div>
+    </div>
+  </div>
+  <div class="card s6">
+    <div class="chead"><h3>Memory breakdown</h3></div>
+    <div class="cwrap"><canvas id="memchart" class="cpuchart"></canvas></div>
+    <div class="clegend">
+      <span class="li"><span class="sw" style="background:var(--info)"></span>used <b id="l_used">4.8G</b></span>
+      <span class="li"><span class="sw" style="background:var(--accent)"></span>cache <b id="l_cache">3.4G</b></span>
+      <span class="li"><span class="sw" style="background:var(--faint)"></span>free <b id="l_free">7.4G</b></span>
+    </div>
+  </div>
+
+  <div class="sechead" role="separator" aria-label="Storage" title="Storage"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5.5" rx="7.5" ry="2.8"/><path d="M4.5 5.5v13c0 1.55 3.36 2.8 7.5 2.8s7.5-1.25 7.5-2.8v-13"/><path d="M4.5 12c0 1.55 3.36 2.8 7.5 2.8s7.5-1.25 7.5-2.8"/></svg></div>
+
+  <!-- Storage: capacity + temperature (short cards), then I/O + throughput (tall cards) -->
+  <div class="card s6">
+    <div class="chead"><h3>Storage</h3><span class="badge" id="zfsbadge">ZFS: <b>2/2 online</b></span></div>
+    <div id="stgroups"></div>
+  </div>
+  <div class="card s6">
+    <div class="chead"><h3>Disk temperature</h3></div>
+    <div class="zrows" id="dtemps"></div>
+  </div>
+  <div class="card s6">
+    <div class="chead"><h3>Disk I/O <small>(R+W)</small></h3><span class="badge">6 disks</span></div>
+    <div id="iogroups"></div>
+    <div class="dsum" id="dsum"></div>
+  </div>
+  <div class="card s6">
+    <div class="chead"><h3>Throughput <small>(ΣR, ΣW)</small></h3></div>
+    <div id="iocharts"></div>
+  </div>
+
+  <div class="sechead" role="separator" aria-label="Network" title="Network"><svg viewBox="0 0 24 24"><path d="M7 16.5 3.5 13 7 9.5M3.5 13H14M17 7.5 20.5 11 17 14.5M20.5 11H10"/></svg></div>
+
+  <!-- Network -->
+  <div class="card s12">
+    <div class="chead"><h3>Network</h3></div>
+    <div class="netwrap">
+      <div class="netcard">
+        <div class="ifn">eth0 <span class="ift">1 GbE</span></div>
+        <canvas data-net="eth0"></canvas>
+        <div class="rt"><span class="dn">▼ <b data-t="e_dn">0.5</b></span><span class="up">▲ <b data-t="e_up">0.6</b></span><span class="un">MB/s</span></div>
+      </div>
+      <div class="netcard">
+        <div class="ifn">tailscale0 <span class="ift">VPN</span></div>
+        <canvas data-net="ts"></canvas>
+        <div class="rt"><span class="dn">▼ <b data-t="t_dn">74</b></span><span class="up">▲ <b data-t="t_up">107</b></span><span class="un">KB/s</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sechead" role="separator" aria-label="Processes" title="Processes"><svg viewBox="0 0 24 24"><path d="M8.5 6h12M8.5 12h12M8.5 18h12M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg></div>
+
+  <!-- Processes -->
+  <div class="card s12">
+    <div class="chead"><h3>Processes</h3><span class="badge" id="proccount">412 task</span></div>
+    <table class="ptable">
+      <colgroup><col class="c-pid"><col class="c-prog"><col><col class="c-user"><col class="c-thr"><col class="c-mem"><col class="c-cpu"></colgroup>
+      <thead><tr id="phead">
+        <th data-k="pid">PID<span class="ar"></span></th><th data-k="name">Program<span class="ar"></span></th><th>Command</th>
+        <th data-k="user">User<span class="ar"></span></th><th class="r" data-k="threads">Thr<span class="ar"></span></th>
+        <th class="r" data-k="mem">Mem<span class="ar"></span></th><th class="r" data-k="cpu">CPU%<span class="ar"></span></th>
+      </tr></thead>
+      <tbody id="procs"></tbody>
+    </table>
+  </div>
+
+</div>
+<p class="foot"><b>RkTopNG</b> · desktop version (mockup) · sample CM3588 data</p>
+</div>
+
+<!-- S.M.A.R.T. window: opened by the disk buttons of the Disk I/O card (one fetch of /api/smart/<dev> per opening, read-only) -->
+<div class="mback" id="smback" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="smtitle">
+    <div class="mhead">
+      <div class="mid"><h2 id="smtitle"></h2><div class="msub" id="smsub"></div></div>
+      <span class="hbadge" id="smbadge"></span>
+      <button type="button" class="mclose" id="smclose" aria-label="Close">×</button>
+    </div>
+    <div class="mbody">
+      <div class="verdict" id="smverdict"></div>
+      <div class="notice" id="smnotice" hidden></div>
+      <div class="sgrid" id="smcards"></div>
+      <div class="card" id="smhist" style="margin-top:14px" hidden>
+        <div class="chead"><h3>Temperature <small>(last 21 h, from the drive’s own log)</small></h3><span class="badge" id="smhbadge"></span></div>
+        <div class="hwrap"><svg id="smhsvg" class="hsvg" viewBox="0 0 800 96" preserveAspectRatio="none" role="img" aria-label="Temperature over the last 21 hours"></svg><span class="hy hy1" id="smhmax"></span><span class="hy hy2" id="smhmin"></span></div>
+        <div class="haxis"><span>21 h ago</span><span>10 min per sample</span><span>now</span></div>
+      </div>
+      <div class="mcols">
+        <div class="card"><div class="chead"><h3>Identity</h3></div><dl class="kv" id="smident"></dl></div>
+        <div class="card"><div class="chead"><h3>Error log <small>&amp; self-tests</small></h3></div><dl class="kv" id="smlogs"></dl><p class="mnote" id="smnote"></p></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="chead"><h3 id="smttl">S.M.A.R.T. attributes</h3>
+          <div class="seg" id="smseg" role="group" aria-label="Rows shown"><button type="button" data-f="all" class="on">All</button><button type="button" data-f="crit">Critical only</button></div></div>
+        <table class="stable" id="smtable"></table>
+      </div>
+      <details class="rules"><summary>How the state is decided</summary>
+        <dl>
+          <dt>Any drive</dt>
+          <dd><b>Failing</b> — the drive’s own self-assessment did not pass.<br>
+              <b>Warning</b> — the temperature is at or above the drive’s limit.</dd>
+          <dt>NVMe</dt>
+          <dd><b>Failing</b> — any critical-warning flag is set · available spare is at or below its threshold · wear ≥ 100%.<br>
+              <b>Warning</b> — media errors above 0 · available spare under 50% · wear ≥ 80%.</dd>
+          <dt>SATA</dt>
+          <dd><b>Failing</b> — an attribute is at or below its threshold now (smartctl’s own verdict) · wear ≥ 100%.<br>
+              <b>Warning</b> — an attribute reached its threshold in the past · more than 0 reallocated, pending, offline-uncorrectable or uncorrectable sectors, or CRC errors · entries in the ATA error log · wear ≥ 80%.</dd>
+          <dt>Never counted</dt>
+          <dd>Unsafe shutdowns, NVMe error-log entries, the all-time peak temperature and any “worst” value: they are shown, but they do not change the state.</dd>
+          <dt>Any brand</dt>
+          <dd>Figures come from the standard logs first (NVMe health log, ATA device statistics, SCT); vendor attributes only where their meaning is recognised. A figure the drive does not report shows <b>n/a</b>, never a guess.</dd>
+        </dl>
+      </details>
+      <p class="mfoot" id="smfoot"></p>
+    </div>
+    <div class="demo">mockup only · simulate
+      <div class="seg" id="smdemo" role="group" aria-label="Simulated state"><button type="button" data-pv="real" class="on">Real data</button><button type="button" data-pv="warn">Warning</button><button type="button" data-pv="crit">Failing</button><button type="button" data-pv="limited">Limited data</button></div></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const css=getComputedStyle(document.documentElement); const C=n=>css.getPropertyValue(n).trim();
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)); const rnd=(a,b)=>a+Math.random()*(b-a);
+  const loadC=p=>p>=80?C('--crit'):p>=50?C('--warn'):C('--good');
+  const tempC=t=>t>=80?C('--crit'):t>=65?C('--warn'):C('--good');
+  const put=(k,v)=>document.querySelectorAll(`[data-t="${k}"]`).forEach(e=>{const s=e.querySelector('span');(s||e).textContent=v;});
+
+
+  // gauges (QUICK_LOOKUP) — open-bottom 270° arc; length + color reflect the value
+  const GC=2*Math.PI*30;          // full circumference
+  const ARC=GC*(240/360);         // visible track = 240° (120° gap at the bottom)
+  document.querySelectorAll('.gauge .trk').forEach(t=>t.style.strokeDasharray=ARC+' '+GC);
+  function gauge(id,frac,color){ const a=document.getElementById('g_'+id); if(!a)return;
+    a.style.strokeDasharray=(clamp(frac,0,1)*ARC)+' '+GC; a.style.stroke=color; }
+  const cpuGC=p=>p>=90?C('--crit'):p>=75?C('--orange'):p>=50?C('--warn'):C('--good');
+  const ramGC=p=>p>=92?C('--crit'):p>=80?C('--orange'):p>=60?C('--warn'):C('--good');
+  const socGC=t=>t>=85?C('--crit'):t>=70?C('--orange'):t>=55?C('--warn'):C('--good');
+  function setG(id,val,frac,col){ const b=document.querySelector('[data-g="'+id+'"]'); if(b)b.textContent=val; gauge(id,frac,col); }
+
+  const gov='schedutil';   // /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+  const fmtFreq=mhz=>mhz+' MHz';
+  // octa-core RK3588: 4×A55 (little) + 2×A76 (big0) + 2×A76 (big1)
+  const cores=[['core0','A55',1],['core1','A55',1],['core2','A55',2],['core3','A55',1],['core4','A76',4],['core5','A76',3],['core6','A76',2],['core7','A76',9]];
+  const CLUSTERS=[['A55',[0,1,2,3]],['A76',[4,5]],['A76',[6,7]]];
+  const cel=document.getElementById('cores');
+  CLUSTERS.forEach(([label,idx])=>{
+    const g=document.createElement('div'); g.className='cgroup';
+    const rows=idx.map(i=>`<div class="row"><span class="n"><b>${cores[i][0]}</b></span><div class="track"><div class="fill" id="cf${i}"></div></div><span class="val"><b class="cusg" id="cv${i}">0</b><span class="pct">%</span><span class="vsep">|</span><span class="cfreq" id="cq${i}">—</span></span></div>`).join('');
+    g.innerHTML=`<div class="clabel"><span>${label}</span></div><div class="crows">${rows}</div>`;
+    cel.appendChild(g);
+  });
+  document.getElementById('cpuavg').innerHTML='governor: <b>'+gov+'</b>';
+
+  // thermal regions (soc lives in QUICK_LOOKUP): name, tile id, initial temp
+  const TZ=[['soc','z0',44.4],['little','z3',44.4],['big_0','z1',45.5],['big_1','z2',45.2],['center','z4',43.5],['gpu','z5',44.3],['npu','z6',46.0]];
+  const tState={}, tH={};
+  const thistEl=document.getElementById('thist');
+  TZ.forEach(([n,id,init])=>{ tState[n]=init; tH[n]=Array(40).fill(init);
+    const r=document.createElement('div'); r.className='stat zrow';
+    r.innerHTML=`<div class="stripe" id="zst_${n}"></div><div class="l">${n}</div><div class="big"><span data-t="${id}">${Math.round(init)}</span><span class="u">°C</span></div><canvas class="zspark" data-ts="${n}"></canvas>`;
+    thistEl.appendChild(r); });
+
+  // Accelerators — real engines (see accelerators memory). g=history group, c=line color, x=VPU extra (expandable)
+  const ENGINES=[
+    {k:'npu0',l:'core0',f:'1000 MHz',g:'npu',c:'--info'},
+    {k:'npu1',l:'core1',f:'1000 MHz',g:'npu',c:'--accent'},
+    {k:'npu2',l:'core2',f:'1000 MHz',g:'npu',c:'--warn'},
+    {k:'venc0',l:'enc0',f:'786 MHz',g:'vpu',c:'--info'},
+    {k:'venc1',l:'enc1',f:'786 MHz',g:'vpu',c:'--accent'},
+    {k:'vdec0',l:'dec0',f:'—',g:'vpu',c:'#eb8b3a'},
+    {k:'vdec1',l:'dec1',f:'—',g:'vpu',c:'--good'},
+    {k:'vjpeg0',l:'jpeg0',f:'—',x:1},{k:'vjpeg1',l:'jpeg1',f:'—',x:1},{k:'vjpeg2',l:'jpeg2',f:'—',x:1},{k:'vjpeg3',l:'jpeg3',f:'—',x:1},
+    {k:'vjpegd',l:'jpegd',f:'—',x:1},{k:'vav1d',l:'av1d',f:'—',x:1},{k:'vvdpu',l:'vdpu',f:'—',x:1},{k:'vavsd',l:'avsd',f:'—',x:1},{k:'viep',l:'iep',f:'—',x:1},
+    {k:'rga30',l:'rga3·0',f:'—',g:'rga',c:'--info'},
+    {k:'rga31',l:'rga3·1',f:'—',g:'rga',c:'--accent'},
+    {k:'rga2',l:'rga2',f:'—',g:'rga',c:'--warn'},
+    {k:'gpu',l:'Mali-G610',f:'700 MHz',g:'gpu',c:'--info'},
+  ];
+  const aState={}, engH={}; ENGINES.forEach(e=>{ aState[e.k]=0; engH[e.k]=Array(40).fill(0); });
+  const eByKeys=ks=>ENGINES.filter(e=>ks.includes(e.k));
+  // NPU/GPU DVFS: load% -> one of the 8 real OPPs 300..1000 MHz
+  const NGSTEPS=[300,400,500,600,700,800,900,1000];
+  const freqStep=load=>NGSTEPS[clamp(Math.floor(load/100*8),0,7)]+' MHz';
+  const accRow=e=>`<div class="row"><span class="n"><b>${e.l}</b></span><div class="track"><div class="fill" data-bar="${e.k}"></div></div><span class="val"><b class="cusg" data-t="${e.k}">0</b><span class="pct">%</span><span class="vsep">|</span><span class="cfreq" data-f="${e.k}">${e.f}</span></span></div>`;
+  const accEl=document.getElementById('accgroups');
+  const addGroup=(label,inner)=>{ const g=document.createElement('div'); g.className='cgroup'; g.innerHTML=`<div class="clabel"><span>${label}</span></div><div class="crows">${inner}</div>`; accEl.appendChild(g); };
+  addGroup('NPU', eByKeys(['npu0','npu1','npu2']).map(accRow).join(''));
+  // VPU: main block (clabel centred on the 4 rows) + extra block below (round expander + hidden engines)
+  { const vMain=eByKeys(['venc0','venc1','vdec0','vdec1']).map(accRow).join('');
+    const vExtra=ENGINES.filter(e=>e.x).map(accRow).join('');
+    const g=document.createElement('div'); g.className='cgroup stack';
+    g.innerHTML=`<div class="cgmain"><div class="clabel"><span>VPU</span></div><div class="crows">${vMain}</div></div>`+
+      `<div class="vexprow"><button class="vexp" id="vexp" aria-label="show all engines"><span class="p">+</span></button></div>`+
+      `<div class="cgextra"><div class="crows" id="vextra" hidden>${vExtra}</div></div>`;
+    accEl.appendChild(g); }
+  addGroup('RGA', eByKeys(['rga30','rga31','rga2']).map(accRow).join(''));
+  addGroup('GPU', eByKeys(['gpu']).map(accRow).join(''));
+  { const b=document.getElementById('vexp'), x=document.getElementById('vextra');
+    b.onclick=()=>{ const closed=x.hasAttribute('hidden');
+      if(closed){ x.removeAttribute('hidden'); b.classList.add('open'); b.setAttribute('aria-label','hide'); }
+      else { x.setAttribute('hidden',''); b.classList.remove('open'); b.setAttribute('aria-label','show all engines'); } }; }
+  // Card 2 — multi-line charts per group
+  const CHARTS=[['npu','NPU'],['vpu','VPU'],['rga','RGA'],['gpu','GPU']];
+  // kernel driver versions (soc_info npu/vpu/rga/gpu_driver): NPU, RGA = release; VPU = MPP source commit; GPU = Mali DDK. Full text in the tooltip.
+  const DRV={npu:['v0.9.8','driver NPU v0.9.8'],vpu:['c79104d','driver MPP c79104d97229 · 2025-08-25'],rga:['v1.3.10','driver RGA v1.3.10'],gpu:['g29p0','driver Mali g29p0-00eac0 (UK version 1.36)']};
+  const colOf=c=>c && c[0]==='-'?C(c):c;
+  const acEl=document.getElementById('acccharts');
+  CHARTS.forEach(([grp,label])=>{ const es=ENGINES.filter(e=>e.g===grp);
+    const leg=es.map(e=>`<span class="lg"><i style="background:${colOf(e.c)}"></i>${e.l}</span>`).join('');
+    const d=document.createElement('div'); d.className='mblock';
+    d.innerHTML=`<div class="mtile"><span class="mname">${label}<i title="${DRV[grp][1]}">${DRV[grp][0]}</i></span><span class="mleg">${leg}</span><canvas class="mspark" data-mc="${grp}"></canvas></div>`;
+    acEl.appendChild(d); });
+
+  // CPU per-core charts (same tile style as the accelerators) grouped by cluster
+  const CPUG=[
+    ['little','LITTLE',[[0,'core0','--info'],[1,'core1','--accent'],[2,'core2','--warn'],[3,'core3','--good']]],
+    ['big0','BIG_0',[[4,'core4','--info'],[5,'core5','--accent']]],
+    ['big1','BIG_1',[[6,'core6','--info'],[7,'core7','--accent']]],
+  ];
+  const coreH=cores.map(()=>Array(40).fill(0));
+  const cpucEl=document.getElementById('cpucharts');
+  CPUG.forEach(([key,label,cs])=>{
+    const leg=cs.map(([,nm,c])=>`<span class="lg"><i style="background:${colOf(c)}"></i>${nm}</span>`).join('');
+    const d=document.createElement('div'); d.className='mblock';
+    d.innerHTML=`<div class="mtile"><span class="mname">${label}</span><span class="mleg">${leg}</span><canvas class="mspark" data-cpuc="${key}"></canvas></div>`;
+    cpucEl.appendChild(d); });
+
+  // processes — btop-like table; click a header to sort (click again to reverse)
+  let sortKey='cpu', sortDir=-1;
+  const DEFDIR={cpu:-1,mem:-1,threads:-1,name:1,pid:1,user:1};   // first click: biggest first for numbers, A→Z for text
+  const procs=[
+    {pid:7013,prog:'java',cmd:'/usr/lib/jvm/java-21-openjdk/bin/java -server -Xmx1g -jar /opt/app/app.jar',thr:60,user:'shad0w',mem:1850,cpu:20},
+    {pid:8406,prog:'node',cmd:'node --dns-result-order=ipv4first --no-network-family-autoselection /app/server.js',thr:11,user:'root',mem:119,cpu:1.4},
+    {pid:3769,prog:'casaos-app-mgmt',cmd:'/usr/bin/casaos-app-management -c /etc/casaos/app-management.conf',thr:12,user:'root',mem:117,cpu:1.4},
+    {pid:2489,prog:'dockerd',cmd:'/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock',thr:30,user:'root',mem:107,cpu:1.2},
+    {pid:14107,prog:'influxd',cmd:'influxd run',thr:15,user:'root',mem:106,cpu:0.9},
+    {pid:11239,prog:'node',cmd:'node --abort_on_uncaught_exception --max_old_space_size=250 index.js',thr:11,user:'root',mem:100,cpu:0.8},
+    {pid:2087,prog:'casaos-local-st',cmd:'/usr/bin/casaos-local-storage -c /etc/casaos/local-storage.conf',thr:13,user:'root',mem:58,cpu:0.6},
+    {pid:1783,prog:'tailscaled',cmd:'/usr/sbin/tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/run/tailscale/tailscaled.sock',thr:15,user:'root',mem:51,cpu:0.5},
+    {pid:1724,prog:'containerd',cmd:'/usr/bin/containerd',thr:16,user:'root',mem:48,cpu:0.5},
+    {pid:6229,prog:'casaos',cmd:'/usr/bin/casaos -c /etc/casaos/casaos.conf',thr:17,user:'root',mem:32,cpu:0.4},
+    {pid:96596,prog:'smbd',cmd:'smbd: client [100.64.0.10]',thr:1,user:'root',mem:24,cpu:0.4},
+    {pid:6090,prog:'casaos-gateway',cmd:'/usr/bin/casaos-gateway',thr:15,user:'root',mem:18,cpu:0.3},
+    {pid:331,prog:'systemd-journald',cmd:'/usr/lib/systemd/systemd-journald',thr:1,user:'root',mem:16,cpu:0.3},
+    {pid:2247168,prog:'rkmon',cmd:'gotty -p 7681 -w rkmon',thr:15,user:'root',mem:19,cpu:0.3},
+    {pid:105195,prog:'zsh',cmd:'-zsh',thr:1,user:'shad0w',mem:9,cpu:0.2},
+    {pid:1474,prog:'rsyslogd',cmd:'/usr/sbin/rsyslogd -n -iNONE',thr:4,user:'syslog',mem:6,cpu:0.1}
+  ];
+  // ascending comparators; sortDir flips them
+  const sorters={cpu:(a,b)=>a.cpu-b.cpu,mem:(a,b)=>a.mem-b.mem,pid:(a,b)=>a.pid-b.pid,name:(a,b)=>a.prog.localeCompare(b.prog),user:(a,b)=>a.user.localeCompare(b.user)||a.cpu-b.cpu,threads:(a,b)=>a.thr-b.thr};
+  const procsEl=document.getElementById('procs'), pheadEl=document.getElementById('phead');
+  pheadEl.querySelectorAll('th[data-k]').forEach(th=>th.onclick=()=>{
+    if(sortKey===th.dataset.k) sortDir=-sortDir; else { sortKey=th.dataset.k; sortDir=DEFDIR[sortKey]; }
+    renderProcs(); });
+  // memory label, max 5 chars: "999M" then "1.2G" … "15.3G"
+  const fmtMem=m=>m<1000?m+'M':(m/1024).toFixed(1)+'G';
+  function renderProcs(){
+    const list=[...procs].sort((a,b)=>sortDir*sorters[sortKey](a,b)).slice(0,15);
+    pheadEl.querySelectorAll('th[data-k]').forEach(th=>{ const on=th.dataset.k===sortKey; th.classList.toggle('on',on);
+      th.querySelector('.ar').textContent=on?(sortDir<0?'▾':'▴'):''; });
+    procsEl.innerHTML=list.map(p=>`<tr><td class="pid">${p.pid}</td><td class="prog">${p.prog}</td><td class="cmd">${p.cmd}</td>
+      <td class="user">${p.user}</td><td class="r num">${p.thr}</td><td class="r num">${fmtMem(p.mem)}</td>
+      <td class="r"><b style="color:${p.cpu>=5?C('--warn'):'var(--text)'};font-weight:600">${p.cpu.toFixed(1)}</b></td></tr>`).join('');
+  }
+  renderProcs();
+
+  // ── STORAGE — real CM3588 layout: 3×NVMe (ZFS raidz1 → /DATA), 2×SATA (ZFS mirror → /SSD_Pool), eMMC (/) ──
+  const KB=1024, MBy=KB*KB, GBy=MBy*KB, TBy=GBy*KB;
+  // size label, max 5 chars: "98M" "9.5G" "10G" "1.8T"
+  const fmtSize=v=>{ const f=(x,u)=>(x<10?x.toFixed(1):Math.round(x))+u;
+    return v>=TBy?f(v/TBy,'T'):v>=GBy?f(v/GBy,'G'):v>=MBy?f(v/MBy,'M'):f(v/KB,'K'); };
+  // throughput label (decimal units, like the network card); 'idle' under 1 KB/s
+  const fmtRate=(v,idle)=>v<1e3?(idle?'idle':'0 KB/s'):v<1e6?Math.round(v/1e3)+' KB/s':v<1e8?(v/1e6).toFixed(1)+' MB/s':v<1e9?Math.round(v/1e6)+' MB/s':(v/1e9).toFixed(1)+' GB/s';
+  // capacity thresholds (proposal — to confirm, see docs/color_thresholds.md): <70 good · 70–84 warn · 85–94 orange · ≥95 crit
+  const diskGC=p=>p>=95?C('--crit'):p>=85?C('--orange'):p>=70?C('--warn'):C('--good');
+  // volumes = real mounts only (statvfs on /proc/mounts, virtual fs / overlay copies / docker graph filtered)
+  const VOLS=[
+    {g:'ZFS', m:'/DATA',     used:98*MBy,  total:1.8*TBy},
+    {g:'ZFS', m:'/SSD_Pool', used:220*MBy, total:1.8*TBy},
+    {g:'eMMC',m:'/',         used:10.8*GBy,total:52*GBy},   // df: 21% (used/(used+avail), reserved blocks excluded)
+  ];
+  const stEl=document.getElementById('stgroups');
+  ['ZFS','eMMC'].forEach(g=>{ const vs=VOLS.filter(v=>v.g===g);
+    const rows=vs.map(v=>`<div class="row"><span class="n"><b>${v.m}</b></span><div class="track"><div class="fill" data-vb="${v.m}"></div></div><span class="val"><b class="cusg" data-vp="${v.m}">0</b><span class="pct">%</span><span class="vsep">|</span><span class="cfreq" data-vx="${v.m}">—</span></span></div>`).join('');
+    const d=document.createElement('div'); d.className='cgroup';
+    d.innerHTML=`<div class="clabel"><span>${g}</span></div><div class="crows${vs.length===1?' one':''}">${rows}</div>`; stEl.appendChild(d); });
+
+  // whole disks (/sys/block), grouped by bus. r/w = bytes/s, b = busy% (from /proc/diskstats deltas)
+  const DISKS=[
+    {k:'nvme0n1',g:'NVMe'},{k:'nvme1n1',g:'NVMe'},{k:'nvme2n1',g:'NVMe'},
+    {k:'sda',g:'SATA'},{k:'sdb',g:'SATA'},
+    {k:'mmcblk2',g:'eMMC'},
+  ];
+  const IOG=['NVMe','SATA','eMMC'];
+  const ioS={}; DISKS.forEach(d=>ioS[d.k]={r:0,w:0,b:0});
+  const ioG={NVMe:{cap:900e6,act:0,wr:0},SATA:{cap:520e6,act:0,wr:0},eMMC:{cap:140e6,act:0,wr:0}};
+  const ioH={}; IOG.forEach(g=>ioH[g]={r:Array(40).fill(0),w:Array(40).fill(0)});
+  const ioEl=document.getElementById('iogroups');
+  IOG.forEach(g=>{ const ds=DISKS.filter(d=>d.g===g);
+    const rows=ds.map(d=>`<div class="row"><span class="n"><b>${d.k}</b></span><div class="track"><div class="fill" data-ib="${d.k}"></div></div><span class="val"><b class="cusg" data-ip="${d.k}">0</b><span class="pct">%</span><span class="vsep">|</span><span class="cfreq" data-ix="${d.k}">idle</span></span></div>`).join('');
+    const x=document.createElement('div'); x.className='cgroup';
+    x.innerHTML=`<div class="clabel"><span>${g}</span></div><div class="crows${ds.length===1?' one':''}">${rows}</div>`; ioEl.appendChild(x); });
+  // throughput charts: one tile per bus group, read (info) + write (accent) summed over its disks, auto-scaled
+  const iochEl=document.getElementById('iocharts');
+  IOG.forEach(g=>{ const d=document.createElement('div'); d.className='mblock';
+    d.innerHTML=`<div class="mtile"><span class="mname">${g}</span><span class="mleg"><span class="lg"><i style="background:${C('--info')}"></i>R <b data-ir="${g}">0 KB/s</b></span><span class="lg"><i style="background:${C('--accent')}"></i>W <b data-iw="${g}">0 KB/s</b></span></span><canvas class="mspark" data-io="${g}"></canvas></div>`;
+    iochEl.appendChild(d); });
+  // 1-2-5 "nice" ceiling so the auto-scale doesn't jitter every tick
+  const niceMax=v=>{ const p=Math.pow(10,Math.floor(Math.log10(v))), m=v/p; return (m<=1?1:m<=2?2:m<=5?5:10)*p; };
+  function dspark(cv,r,w){ const dpr=devicePixelRatio||1,W=cv.clientWidth,h=cv.clientHeight; if(!W)return;
+    cv.width=W*dpr;cv.height=h*dpr;const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,h);
+    const TOP=h*0.2, n=r.length, mx=niceMax(Math.max(1e6,...r,...w)), x=i=>i/(n-1)*W, y=v=>h-(v/mx)*(h-TOP);
+    g.strokeStyle='rgba(138,151,165,.16)'; g.lineWidth=1;
+    [1,.75,.5,.25].forEach(t=>{ const gy=y(mx*t); g.beginPath(); g.moveTo(0,gy+.5); g.lineTo(W,gy+.5); g.stroke(); });
+    [[r,C('--info')],[w,C('--accent')]].forEach(([d,col])=>{ g.beginPath(); d.forEach((v,i)=>i?g.lineTo(x(i),y(v)):g.moveTo(x(i),y(v)));
+      g.strokeStyle=col; g.lineWidth=1.4; g.stroke(); });
+    g.globalCompositeOperation='destination-out';
+    const f=g.createLinearGradient(0,0,W,0); f.addColorStop(0,'rgba(0,0,0,1)'); f.addColorStop(.3,'rgba(0,0,0,0)');
+    g.fillStyle=f; g.fillRect(0,0,W,h); g.globalCompositeOperation='source-over';
+    // scale label (= top gridline) on top, bottom-right of the legend band
+    g.font='600 9px "IBM Plex Mono",monospace'; g.textAlign='right'; g.textBaseline='alphabetic';
+    const lab=fmtRate(mx), tw=g.measureText(lab).width;
+    g.fillStyle='rgba(10,14,19,.5)'; g.fillRect(W-4-tw-3, TOP+2, tw+5, 11);
+    g.fillStyle='rgba(206,215,223,.95)'; g.fillText(lab, W-4, TOP+11);
+  }
+  // disk temperatures: one full-width tile per drive, same tile/scale/sparkline as the thermal zones.
+  // NVMe = hwmon nvme → temp1_input (1 s); SATA = SMART (`smartctl -j` → temperature.current), polled slowly (~30 s → stepped line).
+  // eMMC has no sensor, so 5 of the 6 disks. Same names/order as the Disk I/O card.
+  const DT=[['nvme0n1',37.9,'nvme'],['nvme1n1',34.9,'nvme'],['nvme2n1',33.9,'nvme'],['sda',33,'sata'],['sdb',33,'sata']];   // real SMART readings (attr 190): both 33 °C
+  const dtS={}, dtH={};
+  const dtEl=document.getElementById('dtemps');
+  DT.forEach(([n,init])=>{ dtS[n]=init; dtH[n]=Array(40).fill(init);
+    const r=document.createElement('div'); r.className='stat zrow';
+    r.innerHTML=`<div class="stripe" id="dst_${n}"></div><div class="l">${n}</div><div class="big"><span id="dt_${n}">${Math.round(init)}</span><span class="u">°C</span></div><canvas class="zspark" data-td="${n}"></canvas>`;
+    dtEl.appendChild(r); });
+  // Overview: the same temperatures as plain tiles, 3 cols × 2 rows (all 6 disks; eMMC has no sensor → n/a). Size = lsblk SIZE (binary units)
+  // [disk, bus, size, model (SMART name when available), firmware (SMART; the eMMC has none)]
+  const OVD=[['nvme0n1','NVMe',953.9*GBy,'Lexar SSD NM790 1TB','11296'],['nvme1n1','NVMe',953.9*GBy,'Lexar SSD NM790 1TB','18950'],['nvme2n1','NVMe',953.9*GBy,'Lexar SSD NM790 1TB','18950'],['sda','SATA',1.8*TBy,'Samsung SSD 870 QVO 2TB','SVQ02B6Q'],['sdb','SATA',1.8*TBy,'Samsung SSD 860 QVO 2TB','RVQ01B6Q'],['mmcblk2','eMMC',57.6*GBy,'A3A561','']];
+  const ovEl=document.getElementById('ovdisks');
+  OVD.forEach(([n,bus,size])=>{ const na=!(n in dtS), r=document.createElement('div'); r.className='stat dtile'+(na?' na':'');
+    r.innerHTML=`<div class="stripe" id="ost_${n}" style="background:${na?'var(--border-2)':socGC(dtS[n])}"></div><div class="l">${n}</div><div class="big">${na?'n/a':`<span id="ot_${n}">${Math.round(dtS[n])}</span><span class="u">°C</span>`}</div><div class="s"><span>${bus}</span><span>${fmtSize(size)}</span></div>`;   // eMMC: n/a = no temperature sensor exposed
+    ovEl.appendChild(r); });
+  // Disk I/O card (under the rows): the same disks as buttons (name · bus · size, model), no live values; each opens its S.M.A.R.T. window, which has the firmware
+  const dsEl=document.getElementById('dsum');
+  OVD.forEach(([n,bus,size,model])=>{ const c=document.createElement('button'); c.type='button'; c.className='dchip'; c.dataset.disk=n;   // data-disk = hook for whatever the buttons will open
+    c.innerHTML=`<span class="l">${n}</span><span class="s"><span>${bus}</span><span>${fmtSize(size)}</span></span><span class="m" title="${model}">${model}</span>`; dsEl.appendChild(c); });
+
+  // CPU load breakdown history (percent of total, per sample)
+  const CN=40; const cpuH={user:Array(CN).fill(0),sys:Array(CN).fill(0),io:Array(CN).fill(0),idle:Array(CN).fill(100)};
+  // stacked area to 100%: user + system + iowait bands, idle fills the rest
+  function drawStack(cv){ const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight; if(!w)return;
+    cv.width=w*dpr;cv.height=h*dpr;const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+    const n=CN,x=i=>i/(n-1)*w,Y=v=>h-(v/100)*h;
+    const cum=Array(n).fill(0);
+    const bands=[['user',C('--info')+'e0'],['sys',C('--accent')+'e0'],['io',C('--warn')+'e0'],['idle',C('--faint')+'33']];
+    bands.forEach(([k,col])=>{ g.beginPath();
+      for(let i=0;i<n;i++){ const t=(k==='idle')?100:cum[i]+cpuH[k][i]; const px=x(i),py=Y(t); i?g.lineTo(px,py):g.moveTo(px,py); }
+      for(let i=n-1;i>=0;i--){ g.lineTo(x(i),Y(cum[i])); }
+      g.closePath(); g.fillStyle=col; g.fill();
+      if(k!=='idle') for(let i=0;i<n;i++) cum[i]+=cpuH[k][i]; });
+  }
+  // memory stacked breakdown (percent of Total): used + cached + buffers, free fills the rest
+  const memHist={used:Array(CN).fill(29.5),cache:Array(CN).fill(22.4)};   // cache = cached + buffers
+  function drawMem(cv){ const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight; if(!w)return;
+    cv.width=w*dpr;cv.height=h*dpr;const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+    const n=CN,x=i=>i/(n-1)*w,Y=v=>h-(v/100)*h;
+    const cum=Array(n).fill(0);
+    const bands=[['used',C('--info')+'e0'],['cache',C('--accent')+'e0'],['free',C('--faint')+'33']];
+    bands.forEach(([k,col])=>{ g.beginPath();
+      for(let i=0;i<n;i++){ const t=(k==='free')?100:cum[i]+memHist[k][i]; const px=x(i),py=Y(t); i?g.lineTo(px,py):g.moveTo(px,py); }
+      for(let i=n-1;i>=0;i--){ g.lineTo(x(i),Y(cum[i])); }
+      g.closePath(); g.fillStyle=col; g.fill();
+      if(k!=='free') for(let i=0;i<n;i++) cum[i]+=memHist[k][i]; });
+  }
+  // thermal sparkline: FIXED scale 15–115°C (gridlines 15/40/65/90/115); constant blue line (= "user")
+  const TTICKS=[15,40,65,90,115], TLO=15, THI=115;
+  function tspark(cv,d){ const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight; if(!w)return;
+    cv.width=w*dpr;cv.height=h*dpr;const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+    const col=C('--info');
+    const x=i=>i/(d.length-1)*w, y=v=>h-((clamp(v,TLO,THI)-TLO)/(THI-TLO))*h;
+    // gridlines 40/65/90 (15/115 = tile edges)
+    g.strokeStyle='rgba(138,151,165,.18)'; g.lineWidth=1;
+    TTICKS.forEach(t=>{ if(t===TLO||t===THI) return; const gy=y(t); g.beginPath(); g.moveTo(0,gy+.5); g.lineTo(w,gy+.5); g.stroke(); });
+    // area + line
+    g.beginPath();d.forEach((v,i)=>i?g.lineTo(x(i),y(v)):g.moveTo(x(i),y(v)));
+    g.lineTo(w,h);g.lineTo(0,h);g.closePath();const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,col+'4d');gr.addColorStop(1,col+'00');g.fillStyle=gr;g.fill();
+    g.beginPath();d.forEach((v,i)=>i?g.lineTo(x(i),y(v)):g.moveTo(x(i),y(v)));g.strokeStyle=col;g.lineWidth=1.5;g.stroke();
+    // fade the whole plot (gridlines + area + line) out toward the left, behind name/value
+    g.globalCompositeOperation='destination-out';
+    const fade=g.createLinearGradient(0,0,w,0);
+    fade.addColorStop(0,'rgba(0,0,0,1)'); fade.addColorStop(.42,'rgba(0,0,0,0)');
+    g.fillStyle=fade; g.fillRect(0,0,w,h);
+    g.globalCompositeOperation='source-over';
+    // scale labels ON TOP, with a subtle backdrop for legibility
+    g.font='600 9px "IBM Plex Mono",monospace'; g.textBaseline='alphabetic'; g.textAlign='right';
+    TTICKS.forEach(t=>{ if(t===THI) return;   // no 115 label (line = top edge)
+      const gy=y(t), by=Math.min(h-2,Math.max(8,gy-4)), lab=t+'°', tw=g.measureText(lab).width, tx=w-4;
+      g.fillStyle='rgba(10,14,19,.5)'; g.fillRect(tx-tw-3, by-9, tw+5, 11);
+      g.fillStyle='rgba(206,215,223,.95)'; g.fillText(lab, tx, by); });
+  }
+
+  // multi-line utilisation chart: FIXED 0–100%; top 1/5 reserved for name+legend, no labels; one line per engine
+  function mspark(cv,series){ const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight; if(!w)return;
+    cv.width=w*dpr;cv.height=h*dpr;const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+    const TOP=h*0.2, x=(i,n)=>i/(n-1)*w, y=v=>h-(clamp(v,0,100)/100)*(h-TOP);
+    // gridlines 100/75/50/25 -> 5 bands, top band is the legend area (100% line = its bottom edge)
+    g.strokeStyle='rgba(138,151,165,.16)'; g.lineWidth=1;
+    [100,75,50,25].forEach(t=>{ const gy=y(t); g.beginPath(); g.moveTo(0,gy+.5); g.lineTo(w,gy+.5); g.stroke(); });
+    series.forEach(s=>{ const d=s.data,n=d.length; g.beginPath(); d.forEach((v,i)=>i?g.lineTo(x(i,n),y(v)):g.moveTo(x(i,n),y(v)));
+      g.strokeStyle=s.color; g.lineWidth=1.4; g.stroke(); });
+    // fade the curves out toward the left
+    g.globalCompositeOperation='destination-out';
+    const f=g.createLinearGradient(0,0,w,0); f.addColorStop(0,'rgba(0,0,0,1)'); f.addColorStop(.3,'rgba(0,0,0,0)');
+    g.fillStyle=f; g.fillRect(0,0,w,h); g.globalCompositeOperation='source-over';
+  }
+
+  // fan sparkline: fixed 0–100% scale (gridlines 25/50/75; 0/100 = tile edges), single blue line
+  const FTICKS=[0,25,50,75,100];
+  function fanspark(cv,d){ const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight; if(!w)return;
+    cv.width=w*dpr;cv.height=h*dpr;const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+    const col=C('--info'), x=i=>i/(d.length-1)*w, y=v=>h-(clamp(v,0,100)/100)*h;
+    g.strokeStyle='rgba(138,151,165,.16)'; g.lineWidth=1;
+    FTICKS.forEach(t=>{ if(t===0||t===100) return; const gy=y(t); g.beginPath(); g.moveTo(0,gy+.5); g.lineTo(w,gy+.5); g.stroke(); });
+    g.beginPath();d.forEach((v,i)=>i?g.lineTo(x(i),y(v)):g.moveTo(x(i),y(v)));
+    g.lineTo(w,h);g.lineTo(0,h);g.closePath();const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,col+'4d');gr.addColorStop(1,col+'00');g.fillStyle=gr;g.fill();
+    g.beginPath();d.forEach((v,i)=>i?g.lineTo(x(i),y(v)):g.moveTo(x(i),y(v)));g.strokeStyle=col;g.lineWidth=1.5;g.stroke();
+    g.globalCompositeOperation='destination-out';
+    const fade=g.createLinearGradient(0,0,w,0); fade.addColorStop(0,'rgba(0,0,0,1)'); fade.addColorStop(.42,'rgba(0,0,0,0)');
+    g.fillStyle=fade; g.fillRect(0,0,w,h); g.globalCompositeOperation='source-over';
+    g.font='600 9px "IBM Plex Mono",monospace'; g.textBaseline='alphabetic'; g.textAlign='right';
+    FTICKS.forEach(t=>{ if(t===100) return; const gy=y(t), by=Math.min(h-2,Math.max(8,gy-4)), lab=t+'%', tw=g.measureText(lab).width, tx=w-4;
+      g.fillStyle='rgba(10,14,19,.5)'; g.fillRect(tx-tw-3, by-9, tw+5, 11);
+      g.fillStyle='rgba(206,215,223,.95)'; g.fillText(lab, tx, by); });
+  }
+  const fanH=Array(40).fill(0); let fan=24;
+
+  // network: per-interface chart with 2 lines (download=info, upload=accent); auto-scaled y
+  function netspark(cv,dn,up){ const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight; if(!w)return;
+    cv.width=w*dpr;cv.height=h*dpr;const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+    const n=dn.length, mx=Math.max(1,...dn,...up), x=i=>i/(n-1)*w, y=v=>h-(v/mx)*(h-2)-1;
+    const line=(d,col)=>{ g.beginPath(); d.forEach((v,i)=>i?g.lineTo(x(i),y(v)):g.moveTo(x(i),y(v)));
+      g.strokeStyle=col; g.lineWidth=1.5; g.stroke(); };
+    line(dn,C('--info')); line(up,C('--accent'));
+  }
+  const netH={ed:Array(40).fill(0),eu:Array(40).fill(0),td:Array(40).fill(0),tu:Array(40).fill(0)};
+  let eDn=0.5,eUp=0.6,tDn=74,tUp=107;   // eth MB/s, tailscale KB/s
+
+  let soc=44.4,cpu=3,ram=28,ddr=1,tick=0;
+  const MEMTOTAL=15.6; let memUsed=4.6, memCache=3.4;   // GB; RAM% = (Total − Available)/Total
+  let cmaUsed=14;   // MB of 128 (CMA)
+  function step(){ tick++;
+    soc=clamp(soc+rnd(-.4,.4),42,58); cpu=clamp(cpu+rnd(-3,3.4),1,72);
+    // memory model: RAM% = (Total − Available)/Total = used (non-reclaimable) / Total
+    memUsed=clamp(memUsed+rnd(-.12,.12),3.4,8.5); memCache=clamp(memCache+rnd(-.18,.18),1.6,5.2);
+    const memBuf=0.09, memFree=clamp(MEMTOTAL-memUsed-memCache-memBuf,0.05,MEMTOTAL), memAvail=memFree+memCache+memBuf;
+    ram=(MEMTOTAL-memAvail)/MEMTOTAL*100;
+    memHist.used.push(memUsed/MEMTOTAL*100); memHist.used.shift();
+    memHist.cache.push((memCache+memBuf)/MEMTOTAL*100); memHist.cache.shift();
+    drawMem(document.getElementById('memchart'));
+    { const S=(id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+      S('l_used',memUsed.toFixed(1)+'G'); S('l_cache',(memCache+memBuf).toFixed(1)+'G'); S('l_free',memFree.toFixed(1)+'G');
+      S('m_availpill',memAvail.toFixed(1)+'G');
+      // DDR Control: dmc load + freq (OPP by load)
+      const dcEl=document.getElementById('dc_bar'); if(dcEl){ dcEl.style.width=ddr+'%'; dcEl.style.background=loadC(ddr); }
+      S('dc_pct',Math.round(ddr)); S('dc_x',(ddr<8?528:ddr<22?1068:ddr<38?1560:2112)+' MHz');
+      // CMA: used/total MB
+      cmaUsed=clamp(cmaUsed+rnd(-2,2.2),2,110); const cpct=Math.round(cmaUsed/128*100);
+      const cmaEl=document.getElementById('cma_bar'); if(cmaEl){ cmaEl.style.width=cpct+'%'; cmaEl.style.background=loadC(cpct); }
+      S('cma_pct',cpct); S('cma_x',Math.round(cmaUsed)+'M/128M'); }
+    ddr=clamp(ddr+rnd(-2,3),0,45);
+    // disk temps: NVMe drift + heat from I/O on the bus; SATA only refreshes every ~30 s (SMART poll) and holds in between
+    DT.forEach(([n,,bus])=>{
+      if(bus==='nvme') dtS[n]=clamp(dtS[n]+rnd(-.25,.25)+(ioG.NVMe.act>.2?.15:-.02),31,52);
+      else if(tick%25===0) dtS[n]=clamp(dtS[n]+rnd(-1,1)+(ioG.SATA.act>.2?.8:-.1),28,50);
+      dtH[n].push(dtS[n]); dtH[n].shift();
+      document.getElementById('dt_'+n).textContent=Math.round(dtS[n]);
+      document.getElementById('dst_'+n).style.background=socGC(dtS[n]);   // same temperature table as SoC/thermal zones — see docs/color_thresholds.md
+      document.getElementById('ot_'+n).textContent=Math.round(dtS[n]); document.getElementById('ost_'+n).style.background=socGC(dtS[n]);   // Overview tiles
+      tspark(document.querySelector(`[data-td="${n}"]`), dtH[n]); });
+    setG('soc',Math.round(soc), soc/100, socGC(soc));
+    setG('cpu',Math.round(cpu), cpu/100, cpuGC(cpu));
+    setG('ram',Math.round(ram), ram/100, ramGC(ram));
+    fan=clamp(fan+rnd(-4,4.3),0,100); fanH.push(fan); fanH.shift();
+    { const fe=document.querySelector('[data-t="fan"]'); if(fe) fe.textContent=Math.round(fan);
+      const fr=document.getElementById('fanraw'); if(fr) fr.textContent=Math.round(fan/100*255)+' / 255'; }
+    fanspark(document.querySelector('[data-fs="fan"]'), fanH);
+
+    cores.forEach((c,i)=>{ c[2]=clamp(c[2]+rnd(-4,4.3),0,c[1]==='A76'?95:60);
+      const f=document.getElementById('cf'+i); f.style.width=c[2]+'%'; f.style.background=loadC(c[2]);
+      document.getElementById('cv'+i).textContent=Math.round(c[2]);
+      coreH[i].push(c[2]); coreH[i].shift();
+      if(tick%3===0){ const tbl=c[1]==='A76'?[600,816,1008,1416,1800,2016,2256,2400]:[408,600,816,1008,1200,1416,1608,1800];
+        document.getElementById('cq'+i).textContent=fmtFreq(tbl[Math.floor(rnd(0,tbl.length))]); }});
+    CPUG.forEach(([key,,cs])=>{ const cv=document.querySelector(`[data-cpuc="${key}"]`); if(!cv) return;
+      mspark(cv, cs.map(([i,,c])=>({data:coreH[i],color:colOf(c)}))); });
+
+    // CPU load breakdown: split overall busy% into user/system/iowait, remainder idle
+    const busy=clamp(cores.reduce((a,c)=>a+c[2],0)/cores.length,0,100);
+    const u=busy*(0.60+rnd(-.05,.05)), s=busy*(0.30+rnd(-.04,.04)), io=busy*(0.06+rnd(-.03,.03));
+    const idle=clamp(100-u-s-io,0,100);
+    cpuH.user.push(u);cpuH.user.shift(); cpuH.sys.push(s);cpuH.sys.shift();
+    cpuH.io.push(io);cpuH.io.shift(); cpuH.idle.push(idle);cpuH.idle.shift();
+    drawStack(document.getElementById('cpuchart'));
+    document.getElementById('c_user').textContent=Math.round(u)+'%';
+    document.getElementById('c_sys').textContent=Math.round(s)+'%';
+    document.getElementById('c_io').textContent=Math.round(io)+'%';
+    document.getElementById('c_idle').textContent=Math.round(idle)+'%';
+
+    // accelerators: per-engine usage (random walk), bars, sessions, multi-line history
+    const spike=tick%7===0;
+    ENGINES.forEach(e=>{ let hi=2;
+      if(e.k.startsWith('npu')) hi=3;
+      else if(e.k.startsWith('venc')) hi=spike?70:4;
+      else if(e.k.startsWith('vdec')) hi=spike?80:6;
+      else if(e.k==='gpu') hi=40;
+      const nv=aState[e.k]=clamp(aState[e.k]+(rnd(0,hi)-aState[e.k])*.4,0,99);
+      document.querySelectorAll(`[data-t="${e.k}"]`).forEach(el=>el.textContent=Math.round(nv));
+      const b=document.querySelector(`[data-bar="${e.k}"]`); if(b){ b.style.width=nv+'%'; b.style.background=loadC(nv); }
+      if(e.k==='gpu'){ const f=document.querySelector('[data-f="gpu"]'); if(f) f.textContent=freqStep(nv); }
+      engH[e.k].push(nv); engH[e.k].shift(); });
+    // NPU: single shared devfreq -> derive from the busiest core, apply to all 3 rows
+    { const nf=freqStep(Math.max(aState.npu0,aState.npu1,aState.npu2)); ['npu0','npu1','npu2'].forEach(k=>{ const f=document.querySelector(`[data-f="${k}"]`); if(f) f.textContent=nf; }); }
+    const vsess=['venc0','venc1','vdec0','vdec1'].filter(k=>aState[k]>5).length;
+    const vsEl=document.getElementById('vpusess'); if(vsEl) vsEl.textContent='VPU '+vsess+' sess';
+    CHARTS.forEach(([grp])=>{ const cv=document.querySelector(`[data-mc="${grp}"]`); if(!cv) return;
+      mspark(cv, ENGINES.filter(e=>e.g===grp).map(e=>({data:engH[e.k],color:colOf(e.c)}))); });
+
+    TZ.forEach(([n,id])=>{
+      const v=tState[n]=(n==='soc') ? soc : clamp(tState[n]+rnd(-.5,.5)+(soc-44.4)*.06, 36, 92);
+      const col=socGC(v);   // stripe color = current temp — see docs/color_thresholds.md
+      const e=document.querySelector(`[data-t="${id}"]`); if(e) e.textContent=Math.round(v);
+      const st=document.getElementById('zst_'+n); if(st) st.style.background=col;
+      tH[n].push(v); tH[n].shift();
+      tspark(document.querySelector(`[data-ts="${n}"]`), tH[n]);
+    });
+
+    // network throughput (random walk) + 2-line charts
+    eDn=clamp(eDn+rnd(-.5,.55),0,12); eUp=clamp(eUp+rnd(-.35,.4),0,8);
+    tDn=clamp(tDn+rnd(-28,30),0,400); tUp=clamp(tUp+rnd(-26,28),0,320);
+    netH.ed.push(eDn);netH.ed.shift(); netH.eu.push(eUp);netH.eu.shift();
+    netH.td.push(tDn);netH.td.shift(); netH.tu.push(tUp);netH.tu.shift();
+    netspark(document.querySelector('[data-net="eth0"]'), netH.ed, netH.eu);
+    netspark(document.querySelector('[data-net="ts"]'), netH.td, netH.tu);
+    put('e_dn',eDn.toFixed(1)); put('e_up',eUp.toFixed(1));
+    put('t_dn',Math.round(tDn)); put('t_up',Math.round(tUp));
+    // storage: capacity grows slowly; ZFS pool state (/proc/spl/kstat/zfs/<pool>/state)
+    VOLS.forEach(v=>{ v.used=clamp(v.used+rnd(-.2,.6)*MBy,0,v.total);
+      const p=v.used/v.total*100, b=document.querySelector(`[data-vb="${v.m}"]`);
+      b.style.width=Math.max(p,.6)+'%'; b.style.background=diskGC(p);
+      document.querySelector(`[data-vp="${v.m}"]`).textContent=p<1?'<1':Math.round(p);
+      document.querySelector(`[data-vx="${v.m}"]`).textContent=fmtSize(v.used)+'/'+fmtSize(v.total); });
+    { const POOLS=['ONLINE','ONLINE'], ok=POOLS.filter(s=>s==='ONLINE').length, zb=document.getElementById('zfsbadge');
+      zb.innerHTML='ZFS: <b style="color:'+(ok===POOLS.length?'var(--text)':C('--crit'))+'">'+ok+'/'+POOLS.length+' online</b>'; }
+    // disk I/O: bursts shared across a group (raidz1 stripes / mirror writes), small background trickle
+    IOG.forEach(g=>{ const G=ioG[g]; G.act*=.5; if(G.act<.003) G.act=0;
+      if(Math.random()<(g==='eMMC'?.1:.07)){ G.act=rnd(.05,.9); G.wr=Math.random()<.5; } });
+    DISKS.forEach(d=>{ const G=ioG[d.g], s=ioS[d.k], jit=rnd(.8,1.1), tot=G.act*G.cap*jit;
+      s.r=(G.wr?tot*.04:tot)+rnd(0,8e3); s.w=(G.wr?tot:tot*.04)+rnd(0,40e3);
+      s.b=clamp(G.act*100*jit+rnd(0,1.5),0,100);
+      const b=document.querySelector(`[data-ib="${d.k}"]`); b.style.width=s.b+'%'; b.style.background=loadC(s.b);
+      document.querySelector(`[data-ip="${d.k}"]`).textContent=Math.round(s.b);
+      document.querySelector(`[data-ix="${d.k}"]`).textContent=fmtRate(s.r+s.w,true); });
+    IOG.forEach(g=>{ const ds=DISKS.filter(d=>d.g===g), r=ds.reduce((a,d)=>a+ioS[d.k].r,0), w=ds.reduce((a,d)=>a+ioS[d.k].w,0), H=ioH[g];
+      H.r.push(r);H.r.shift(); H.w.push(w);H.w.shift();
+      document.querySelector(`[data-ir="${g}"]`).textContent=fmtRate(r); document.querySelector(`[data-iw="${g}"]`).textContent=fmtRate(w);
+      dspark(document.querySelector(`[data-io="${g}"]`), H.r, H.w); });
+
+    procs.forEach(p=>{ p.cpu=clamp(p.cpu+rnd(-.4,.5),0,p.mem>90?9:3); });
+    if(tick%4===0) renderProcs();
+  }
+  // ── S.M.A.R.T. window ─────────────────────────────────────────────────────────────────────────────
+  // Values come from real GET /api/smart/<dev> answers of this board (2026-10-03); serial numbers / WWNs are masked in the mockup.
+  // The rules below mirror exporter/collectors/smartdetail_*.go (see docs/smart_status.md): standard sources first (NVMe health log,
+  // ATA device statistics, SCT), vendor attributes only by recognised role, and a figure the drive does not report is "n/a", never guessed.
+  const nf=n=>Math.round(n).toLocaleString('en-US');
+  const dec=b=>b>=1e12?(b/1e12).toFixed(2)+' TB':b>=1e9?(b/1e9).toFixed(1)+' GB':Math.round(b/1e6)+' MB';   // decimal units, like the drives' own labels
+  const dur=h=>h>=13149?(h/8766).toFixed(1)+' years':h>=48?Math.round(h/24)+' days':h+' h';
+  const SC={ok:'var(--good)',warn:'var(--warn)',crit:'var(--crit)',info:'var(--info)'};
+  const RANK={ok:0,info:0,warn:1,crit:2}, worse=(a,b)=>RANK[b]>RANK[a]?b:a;
+  const WEAR_WARN=80, WEAR_FAIL=100, SPARE_WARN=50;
+  const wearLv=p=>p>=WEAR_FAIL?'crit':p>=WEAR_WARN?'warn':'ok';
+
+  // [A] one attribute row as the API returns it: id, name, normalized, worst, threshold, raw, pre-fail flag, role (recognised by name), when_failed
+  const A=(id,name,val,worst,thr,raw,pf,role,wf)=>({id,name,val,worst,thr,raw,pf:!!pf,role:role||'',wf:wf||''});
+  const SM_NV={   // NVMe: limits and link come from the kernel (hwmon, sysfs); everything else from the NVMe health log
+    nvme0n1:{model:"Lexar SSD NM790 1TB",cap:1024209543168,fw:"11296",ver:"1.4",serial:"NM23••••••••••••02",tmax:89.85,tcrit:94.85,linkCur:"PCIe Gen3 ×1 · 8.0 GT/s",linkMax:"PCIe Gen4 ×4 · 16.0 GT/s",passed:true,cw:0,spare:100,spareThr:10,used:0,media:0,errs:0,warnT:0,critT:0,poh:7248,cyc:189,unsafe:104,dr:73233,dw:1.27905e+07,hr:1.44532e+06,hw:1.13953e+08,busy:303,temp:38,sens:[38, 32]},
+    nvme1n1:{model:"Lexar SSD NM790 1TB",cap:1024209543168,fw:"18950",ver:"2.0",serial:"PHU7••••••••••••0J",tmax:89.85,tcrit:94.85,linkCur:"PCIe Gen3 ×1 · 8.0 GT/s",linkMax:"PCIe Gen4 ×4 · 16.0 GT/s",passed:true,cw:0,spare:100,spareThr:10,used:0,media:0,errs:0,warnT:0,critT:0,poh:3725,cyc:54,unsafe:42,dr:45898,dw:635932,hr:4.81496e+06,hw:1.15318e+08,busy:235,temp:35,sens:[35, 38]},
+    nvme2n1:{model:"Lexar SSD NM790 1TB",cap:1024209543168,fw:"18950",ver:"2.0",serial:"PHU7••••••••••••0J",tmax:89.85,tcrit:94.85,linkCur:"PCIe Gen3 ×1 · 8.0 GT/s",linkMax:"PCIe Gen4 ×4 · 16.0 GT/s",passed:true,cw:0,spare:100,spareThr:10,used:0,media:0,errs:0,warnT:0,critT:0,poh:3725,cyc:54,unsafe:45,dr:17876,dw:585977,hr:1.1466e+06,hw:1.14757e+08,busy:227,temp:34,sens:[34, 39]},
+  };
+  const SM_SA={   // SATA: ds = ATA device statistics (standard), sct = the drive's SCT temperature log (standard)
+    sda:{model:"Samsung SSD 870 QVO 2TB",fam:"Samsung based SSDs",cap:2000398934016,fw:"SVQ02B6Q",sata:"SATA 3.3",std:"ACS-4",serial:"S5RP•••••••••6R",wwn:"0x5002538•••••••••",ff:"2.5″",linkCur:"6.0 Gb/s",linkMax:"6.0 Gb/s",known:true,passed:true,errlog:0,tests:0,short:2,ext:160,temp:34,poh:20396,cyc:107,wearPct:null,
+      ds:{wear:0,written:4.50438e+12,read:1.97564e+12,crc:0},
+      sct:{max:84,min:24,limit:70,hist:[33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 43, 34, 34, 34, 33, 34, 33, 33, 37, 34, 34, 33, 34, 34, 33, 33, 33, 33, 33, 33, 33, 34, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 32, 32, 32, 33, 33, 33, 33, 33, 33, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34]},
+      attrs:[
+        A(5,"Reallocated_Sector_Ct",100,100,10,0,1,"reallocated"),
+        A(9,"Power_On_Hours",95,95,0,20396,0,"power_on_hours"),
+        A(12,"Power_Cycle_Count",99,99,0,107,0,"power_cycles"),
+        A(177,"Wear_Leveling_Count",99,99,0,3,1,"wear"),
+        A(179,"Used_Rsvd_Blk_Cnt_Tot",100,100,10,0,1,""),
+        A(181,"Program_Fail_Cnt_Total",100,100,10,0,0,""),
+        A(182,"Erase_Fail_Count_Total",100,100,10,0,0,""),
+        A(183,"Runtime_Bad_Block",100,100,10,0,1,""),
+        A(187,"Uncorrectable_Error_Cnt",100,100,0,0,0,"uncorrectable"),
+        A(190,"Airflow_Temperature_Cel",66,16,0,34,0,"temperature"),
+        A(195,"ECC_Error_Rate",200,200,0,0,0,""),
+        A(199,"CRC_Error_Count",100,100,0,0,0,"crc"),
+        A(235,"POR_Recovery_Count",99,99,0,99,0,"unsafe_shutdown"),
+        A(241,"Total_LBAs_Written",99,99,0,8.79761e+09,0,"written")]},
+    sdb:{model:"Samsung SSD 860 QVO 2TB",fam:"Samsung based SSDs",cap:2000398934016,fw:"RVQ01B6Q",sata:"SATA 3.2",std:"ACS-4",serial:"S4CY•••••••••2F",wwn:"0x5002538•••••••••",ff:"2.5″",linkCur:"6.0 Gb/s",linkMax:"6.0 Gb/s",known:true,passed:true,errlog:0,tests:0,short:2,ext:160,temp:34,poh:36636,cyc:156,wearPct:null,
+      ds:{wear:1,written:1.28918e+13,read:7.20438e+12,crc:0},
+      sct:{max:73,min:22,limit:70,hist:[34, 34, 34, 34, 34, 34, 34, 33, 33, 34, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 34, 34, 34, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34]},
+      attrs:[
+        A(5,"Reallocated_Sector_Ct",100,100,10,0,1,"reallocated"),
+        A(9,"Power_On_Hours",92,92,0,36636,0,"power_on_hours"),
+        A(12,"Power_Cycle_Count",99,99,0,156,0,"power_cycles"),
+        A(177,"Wear_Leveling_Count",98,98,0,15,1,"wear"),
+        A(179,"Used_Rsvd_Blk_Cnt_Tot",100,100,10,0,1,""),
+        A(181,"Program_Fail_Cnt_Total",100,100,10,0,0,""),
+        A(182,"Erase_Fail_Count_Total",100,100,10,0,0,""),
+        A(183,"Runtime_Bad_Block",100,100,10,0,1,""),
+        A(187,"Uncorrectable_Error_Cnt",100,100,0,0,0,"uncorrectable"),
+        A(190,"Airflow_Temperature_Cel",66,27,0,34,0,"temperature"),
+        A(195,"ECC_Error_Rate",200,200,0,0,0,""),
+        A(199,"CRC_Error_Count",100,100,0,0,0,"crc"),
+        A(235,"POR_Recovery_Count",99,99,0,101,0,"unsafe_shutdown"),
+        A(241,"Total_LBAs_Written",99,99,0,2.51794e+10,0,"written")]},
+  };
+
+  // Short descriptions: by recognised role first, else by the exact name smartctl resolved (a name means the same thing on every drive).
+  const ROLE_INFO={
+    reallocated:'Sectors the drive found bad and replaced with spares. Anything above 0 deserves attention.',
+    pending:'Sectors waiting to be reallocated or re-read.',offline_uncorrectable:'Sectors the background scan could not read.',
+    uncorrectable:'Errors the drive’s ECC could not recover.',crc:'Transmission errors on the SATA link. Above 0 usually means a bad cable or connector.',
+    temperature:'Temperature in °C. Normalized and Worst show the same reading on the drive’s own scale; the all-time peak is in the Temperature card.',
+    power_on_hours:'Total time powered on.',power_cycles:'Number of power-on cycles.',
+    wear:'SSD wear: the normalized value falls from 100 (new) towards 0.',written:'Host data written over the drive’s life.',read:'Host data read over the drive’s life.',
+    unsafe_shutdown:'Power lost without a clean shutdown.'};
+  const NAME_INFO={Program_Fail_Cnt_Total:'Failed programming (write) operations on flash cells.',Erase_Fail_Count_Total:'Failed erase operations on flash cells.',
+    Used_Rsvd_Blk_Cnt_Tot:'Spare blocks consumed so far.',Runtime_Bad_Block:'Blocks that went bad while the drive was in use.',
+    Hardware_ECC_Recovered:'Errors corrected by the ECC (normal).',ECC_Error_Rate:'Errors corrected by the ECC (normal).'};
+  const COUNTER_ROLES=['reallocated','pending','offline_uncorrectable','uncorrectable','crc'];
+  const WHAT={reallocated:'reallocated sectors or blocks',pending:'sectors waiting to be reallocated',offline_uncorrectable:'sectors the offline scan could not read',uncorrectable:'uncorrectable errors',crc:'interface CRC errors (check the cable or connector)'};
+
+  // a row is [label, value html, dim, sub]; sub = a faint second line. A value with explained units (.tip) must not be clipped, hence class rich
+  const kvHtml=a=>a.map(([k,v,dim,sub])=>`<dt>${k}</dt><dd class="${dim?'dim ':''}${v.includes('class="tip"')?'rich':''}">${v}${sub?`<span class="sub">${sub}</span>`:''}</dd>`).join('');
+  // capacity: the same bytes in the decimal unit printed on the box and the binary one the system reports; each unit explains itself on hover
+  const capHtml=b=>{ const dd=dec(b).split(' '), TiB=1024**4, bin=b>=TiB?[(b/TiB).toFixed(2),'TiB']:[(b/1024**3).toFixed(1),'GiB'], U={MB:1e6,GB:1e9,TB:1e12,GiB:1024**3,TiB:TiB}, ex=`This disk: ${nf(b)} bytes.`;
+    const tip=(txt,t)=>`<span class="tip" tabindex="0" data-tip="${t}">${txt}</span>`;
+    return tip(dd.join(' '),`Decimal: 1 ${dd[1]} = ${nf(U[dd[1]])} bytes. The size the maker prints on the box. ${ex}`)+' · '+tip(bin.join(' '),`Binary: 1 ${bin[1]} = ${nf(U[bin[1]])} bytes. The size the system reports, and the one on the disk tiles (${fmtSize(b)}). ${ex}`); };
+  const dot=lv=>`<i class="sdot" style="background:${SC[lv]}"></i>`;
+  const TH=(label,tip,cls)=>`<th${cls?` class="${cls}"`:''} tabindex="0" data-tip="${tip}"><span>${label}</span></th>`;   // column header with a tooltip
+  const unit=(b,u)=>b==null?{v:'n/a',na:1}:{v:dec(b).replace(' ','<span class="u"> ')+'</span>'};
+  const card=(l,val,u,s,lv,src)=>val==null?{l,v:'n/a',na:1,s:'not reported by this drive',lv:'ok'}:{l,v:val,u,s,lv,src};
+
+  // NVMe: the health log is defined by the NVMe specification, so every brand reports the same fields.
+  function nvmeView(k,pv){
+    const d={...SM_NV[k]};
+    if(pv==='warn'){ d.media=3; d.errs=3; d.used=84; d.spare=45; }
+    if(pv==='crit'){ d.cw=1; d.spare=8; d.media=3; d.errs=3; d.passed=false; }
+    const R=[], add=(l,t)=>R.push([l,t]);
+    if(!d.passed) add('crit','The drive’s own health self-assessment did not pass.');
+    if(d.cw) add('crit',`Critical warning flags are set (0x${d.cw.toString(16).padStart(2,'0')}): available spare below threshold.`);
+    if(d.spare<=d.spareThr) add('crit',`Available spare is ${d.spare}%, at or below the drive’s threshold (${d.spareThr}%).`);
+    else if(d.spare<SPARE_WARN) add('warn',`Available spare is down to ${d.spare}%.`);
+    if(d.used>=WEAR_FAIL) add('crit',`Rated endurance is used up (${d.used}% used).`); else if(d.used>=WEAR_WARN) add('warn',`${d.used}% of the rated endurance is used.`);
+    if(d.media>0) add('warn',`${nf(d.media)} media and data-integrity errors (unrecovered).`);
+    if(d.temp>=d.tmax) add('warn',`Temperature ${d.temp} °C is at or above the drive’s limit (${Math.round(d.tmax)} °C).`);
+    const state=R.reduce((s,r)=>worse(s,r[0]),'ok');
+    const lvSpare=d.spare<=d.spareThr?'crit':d.spare<SPARE_WARN?'warn':'ok', lvUsed=wearLv(d.used), lvMedia=d.media>0?'warn':'ok', lvTemp=d.temp>=d.tmax?'warn':'ok';
+    const pc=Math.round(100*d.unsafe/d.cyc), cw='0x'+d.cw.toString(16).padStart(2,'0');
+    const cards=[
+      card('Wear',d.used,'%','rated endurance used',lvUsed,'NVMe health log'),
+      card('Available spare',d.spare,'%',`threshold ${d.spareThr}%`,lvSpare,'NVMe health log'),
+      card('Temperature',d.temp,'°C',`limits ${Math.round(d.tmax)} / ${Math.round(d.tcrit)} °C`,lvTemp,'NVMe composite sensor; limits from the kernel (hwmon)'),
+      card('Media errors',nf(d.media),'','unrecovered integrity errors',lvMedia,'NVMe health log'),
+      {l:'Data written',...unit(d.dw*512000),s:`${nf(d.hw)} write commands`,lv:'info',src:'NVMe health log'},
+      {l:'Data read',...unit(d.dr*512000),s:`${nf(d.hr)} read commands`,lv:'info',src:'NVMe health log'},
+      card('Power-on time',nf(d.poh),'h',`≈ ${dur(d.poh)} · ${nf(d.cyc)} power cycles`,'info','NVMe health log'),
+      card('Unsafe shutdowns',nf(d.unsafe),'',`of ${nf(d.cyc)} power cycles (${pc}%)`,'info','NVMe health log')];
+    const row=(lv,name,note,val,thr,crit)=>({crit,html:`<td class="st">${dot(lv)}</td><td class="nm">${name}${crit?'<span class="tag crit">critical</span>':''}<small>${note}</small></td><td class="r num">${val}</td><td class="r num">${thr||'—'}</td>`});
+    const rows=[
+      row(d.cw?'crit':'ok','Critical warning','Bit field of controller warnings; 0 means none.',cw,'0x00',1),
+      row(lvSpare,'Available spare','Remaining spare capacity, as a percentage.',d.spare+'%','≥ '+d.spareThr+'%',1),
+      row(lvUsed,'Percentage used','Vendor estimate of the endurance consumed; can exceed 100%.',d.used+'%','100%',1),
+      row(lvMedia,'Media and data-integrity errors','Unrecovered data-integrity errors the controller detected.',nf(d.media),'0',1),
+      row(d.errs>0?'info':'ok','Error log entries','Entries in the controller’s error log over its lifetime.',nf(d.errs),'—',1),
+      row(lvTemp,'Temperature',`Composite temperature. Sensor 1: ${d.sens[0]} °C · Sensor 2: ${d.sens[1]} °C.`,d.temp+' °C',`${Math.round(d.tmax)} / ${Math.round(d.tcrit)} °C`),
+      row('ok','Power-on hours','Total time powered on.',`${nf(d.poh)}<span class="hu">≈ ${dur(d.poh)}</span>`),
+      row('ok','Power cycles','Number of power-on cycles.',nf(d.cyc)),
+      row('info','Unsafe shutdowns','Shutdowns without a shutdown notification (power loss or abrupt power-off).',`${nf(d.unsafe)}<span class="hu">${pc}% of cycles</span>`),
+      row('ok','Data units read','Host reads, in units of 512,000 bytes.',`${nf(d.dr)}<span class="hu">${dec(d.dr*512000)}</span>`),
+      row('ok','Data units written','Host writes, in units of 512,000 bytes.',`${nf(d.dw)}<span class="hu">${dec(d.dw*512000)}</span>`),
+      row('ok','Host read commands','Completed read commands.',nf(d.hr)),
+      row('ok','Host write commands','Completed write commands.',nf(d.hw)),
+      row('ok','Controller busy time','Time the controller spent processing I/O commands.',nf(d.busy)+' min'),
+      row('ok','Warning temperature time','Time spent above the warning temperature.',nf(d.warnT)+' min'),
+      row('ok','Critical temperature time','Time spent above the critical temperature.',nf(d.critT)+' min')];
+    const linkSub=d.linkMax!==d.linkCur?`drive supports ${d.linkMax.replace('PCIe ','')}`:'';
+    return {state,R,k,model:d.model,sub:`NVMe ${d.ver} · ${dec(d.cap)} · firmware ${d.fw}`,cards,rows,notice:'',hist:null,
+      thead:`<th></th>${TH('Attribute','Field of the drive’s NVMe health log.')}${TH('Value','Current value reported by the drive.','r')}`
+        +TH('Threshold','Limit the drive sets for this field; the state changes when the value crosses it. — means none.','r'),ttl:'NVMe health log',
+      ident:[['Device','/dev/'+k],['Model',d.model],['Firmware',d.fw],['Serial number',d.serial,1],['Capacity',capHtml(d.cap)],['Standard','NVMe '+d.ver],['Link',d.linkCur,0,linkSub],['Namespaces','1 · 512 B logical blocks']],
+      logs:[['Error log entries',`${nf(d.errs)} <span style="color:var(--faint)">(keeps up to 64)</span>`],['Self-test log','not supported by this drive',1]],note:''};
+  }
+
+  // SATA: standard device statistics and SCT first, vendor attributes shown in full and used only where their role is recognised.
+  function sataView(k,pv){
+    const d={...SM_SA[k], attrs:SM_SA[k].attrs.map(a=>({...a})), ds:SM_SA[k].ds&&{...SM_SA[k].ds}, sct:SM_SA[k].sct&&{...SM_SA[k].sct}};
+    const at=id=>d.attrs.find(a=>a.id===id);
+    if(pv==='warn'){ const a5=at(5), a199=at(199); a5.raw=8; a5.val=99; a5.worst=99; a199.raw=12; d.errlog=2; }
+    if(pv==='crit'){ const a5=at(5); a5.raw=412; a5.val=9; a5.worst=9; a5.wf='now'; d.passed=false; at(187).raw=3; }
+    if(pv==='limited'){   // a drive of another brand that exposes little: no standard logs, names smartctl does not know
+      Object.assign(d,{model:'Generic SSD 256GB',fam:'',fw:'V1.0',serial:'GEN•••••••••••01',wwn:'',cap:256060514304,ff:'',sata:'SATA 3.0',std:'ACS-3',known:false,ds:null,sct:null,errlog:null,tests:null,temp:33,poh:2304,cyc:48});
+      d.attrs=[A(1,'Unknown_Attribute',100,100,0,0),A(9,'Power_On_Hours',99,99,0,2304,0,'power_on_hours'),A(12,'Power_Cycle_Count',99,99,0,48,0,'power_cycles'),
+        A(160,'Unknown_Attribute',100,100,0,0),A(194,'Temperature_Celsius',67,60,0,33,0,'temperature'),A(231,'Unknown_Attribute',100,100,0,9)];
+    }
+    const byRole=r=>d.attrs.filter(a=>a.role===r), maxRaw=r=>{ const x=byRole(r); return x.length?Math.max(...x.map(a=>a.raw)):null; };
+    // headline figures: the standard source wins, a recognised attribute fills in, otherwise null ("n/a")
+    const V={temp:d.temp, peak:d.sct&&d.sct.max, limit:d.sct&&d.sct.limit};
+    if(d.ds&&d.ds.wear!=null){ V.wear=d.ds.wear; V.wearSrc='device statistics'; }
+    else { const w=byRole('wear')[0]; if(w&&w.val>=0&&w.val<=100){ V.wear=100-w.val; V.wearSrc=`attribute ${w.id} ${w.name}`; } }
+    if(d.ds&&d.ds.written!=null){ V.written=d.ds.written; V.writtenSrc='device statistics'; }
+    if(d.ds&&d.ds.read!=null){ V.read=d.ds.read; V.readSrc='device statistics'; }
+    V.realloc=maxRaw('reallocated'); V.pending=maxRaw('pending'); V.unc=maxRaw('uncorrectable'); V.crc=maxRaw('crc');
+    if(d.ds&&d.ds.crc!=null) V.crc=V.crc==null?d.ds.crc:Math.max(V.crc,d.ds.crc);
+    const u=byRole('unsafe_shutdown')[0]; if(u){ V.unsafe=u.raw; V.unsafeSrc=`attribute ${u.id} ${u.name}`; }
+    const lvOf=a=>a.wf==='now'?'crit':a.wf==='past'?'warn':COUNTER_ROLES.includes(a.role)&&a.raw>0?'warn':a.role==='wear'&&a.val>=0&&a.val<=100?wearLv(100-a.val):a.role==='unsafe_shutdown'?'info':'ok';
+
+    const R=[], add=(l,t)=>R.push([l,t]);
+    if(!d.passed) add('crit','The drive’s own health self-assessment did not pass.');
+    d.attrs.forEach(a=>{ if(a.wf==='now') add('crit',`Attribute ${a.id} ${a.name} is at ${a.val}, at or below its threshold (${a.thr}).`);
+      else if(a.wf==='past') add('warn',`Attribute ${a.id} ${a.name} fell to its threshold (${a.thr}) in the past (worst ${a.worst}).`); });
+    [['reallocated',V.realloc],['pending',V.pending],['offline_uncorrectable',maxRaw('offline_uncorrectable')],['uncorrectable',V.unc],['crc',V.crc]].forEach(([r,n])=>{ if(n>0) add('warn',`${nf(n)} ${WHAT[r]}.`); });
+    if(V.wear!=null){ const l=wearLv(V.wear); if(l==='crit') add('crit',`Rated endurance is used up (${V.wear}% used).`); else if(l==='warn') add('warn',`${V.wear}% of the rated endurance is used.`); }
+    if(d.errlog>0) add('warn',`The ATA error log has ${d.errlog} entries.`);
+    if(V.limit!=null&&V.temp>=V.limit) add('warn',`Temperature ${V.temp} °C is at or above the drive’s limit (${V.limit} °C).`);
+    const state=R.reduce((s,r)=>worse(s,r[0]),'ok');   // the all-time peak temperature is shown, never counted
+
+    const cnt=(l,n,lv,s)=>n==null?card(l,null):card(l,nf(n),'',s,lv,'');
+    const cards=[
+      V.wear==null?card('Wear',null):card('Wear',V.wear,'%','rated endurance used',wearLv(V.wear),V.wearSrc),
+      card('Temperature',V.temp,'°C',V.peak!=null?`peak ${V.peak} · limit ${V.limit} °C`:'no limit reported','ok','smartctl temperature'+(V.peak!=null?'. Peak = hottest ever recorded, limit = operating limit, both from the drive’s SCT log; the peak is shown but never counted':'')),
+      cnt('Reallocated sectors',V.realloc,V.realloc>0?'warn':'ok','bad sectors replaced by spares'),
+      cnt('CRC errors',V.crc,V.crc>0?'warn':'ok','SATA cable / link errors'),
+      V.written==null?card('Data written',null):{l:'Data written',...unit(V.written),s:'host writes, whole life',lv:'info',src:V.writtenSrc},
+      V.read==null?card('Data read',null):{l:'Data read',...unit(V.read),s:'host reads, whole life',lv:'info',src:V.readSrc},
+      card('Power-on time',nf(d.poh),'h',`≈ ${dur(d.poh)} · ${nf(d.cyc)} power cycles`,'info','smartctl'),
+      V.unsafe==null?card('Unsafe shutdowns',null):card('Unsafe shutdowns',nf(V.unsafe),'',`of ${nf(d.cyc)} power cycles (${Math.round(100*V.unsafe/d.cyc)}%)`,'info',V.unsafeSrc)];
+
+    const human=a=>a.role==='power_on_hours'?dur(a.raw):a.role==='written'||a.role==='read'?dec(a.raw*(a.unit||512)):a.role==='temperature'?a.raw+' °C':a.role==='unsafe_shutdown'?Math.round(100*a.raw/d.cyc)+'% of power cycles':'';
+    const rows=d.attrs.map(a=>{ const isCrit=!!(a.pf||COUNTER_ROLES.includes(a.role)||a.role==='wear'), txt=ROLE_INFO[a.role]||NAME_INFO[a.name]||'', hu=human(a);
+      return {crit:isCrit,html:`<td class="st">${dot(lvOf(a))}</td><td class="id">${a.id} · 0x${a.id.toString(16).toUpperCase().padStart(2,'0')}</td>`
+        +`<td class="nm">${a.name}${isCrit?'<span class="tag crit">critical</span>':''}${txt?`<small>${txt}</small>`:''}</td>`
+        +`<td class="r num">${a.val}</td><td class="r num">${a.worst}</td><td class="r num">${a.thr||'—'}</td><td class="r num">${nf(a.raw)}${hu?`<span class="hu">${hu}</span>`:''}</td>`}; });
+    const link=`${d.sata} · ${d.linkCur}`, linkSub=d.linkMax!==d.linkCur?`drive supports ${d.linkMax}`:'';
+    return {state,R,k,model:d.model,sub:`${d.sata} · ${dec(d.cap)} · firmware ${d.fw}`,cards,rows,
+      notice:d.known===false?'This model is not in smartctl’s drive database: its attribute names may be generic, so only figures from the standard logs or well-known names are shown.':'',
+      hist:d.sct&&d.sct.hist?{samples:d.sct.hist,min:d.sct.min,max:d.sct.max}:null,
+      thead:`<th></th>${TH('ID','Attribute number (decimal · hex), defined by the drive’s vendor.')}${TH('Attribute','Name from smartctl’s drive database, which knows each vendor’s real names.')}`
+        +TH('Normalized','Score the drive computes from the raw value. Higher is better and it falls as things get worse. The scale is vendor-specific (often 100 = new).','r')
+        +TH('Worst','Lowest Normalized value ever recorded. It never goes back up, so it reveals past problems.','r')
+        +TH('Thresh','If Normalized falls to this value or below, the drive reports the attribute as failed. — means no threshold: it can never fail.','r')
+        +TH('Raw','The actual count or measurement, in the attribute’s own unit (hours, sectors, °C…).','r'),ttl:'S.M.A.R.T. attributes',
+      ident:[['Device','/dev/'+k],d.fam?['Model family',d.fam]:null,['Model',d.model],['Firmware',d.fw],['Serial number',d.serial,1],d.wwn?['WWN',d.wwn,1]:null,['Capacity',capHtml(d.cap)],
+        ['Standard',d.std||'ATA'],['Link',link,0,linkSub],d.ff?['Form factor',`${d.ff} SSD · TRIM supported`]:null].filter(Boolean),
+      logs:[['ATA error log',d.errlog==null?'not reported':d.errlog?`${d.errlog} entries`:'no entries',d.errlog==null],['Self-tests run',d.tests==null?'not supported by this drive':d.tests?String(d.tests):'none yet',d.tests==null],
+        ...(d.tests==null?[]:[['Short / extended',`≈ ${d.short} min / ≈ ${d.ext} min`]])],
+      note:d.tests==null?'':'This window only reads. Scheduled self-tests can be set up with smartd (directive -s).'};
+  }
+
+  // Temperature history: the drive's own SCT log, 128 samples 10 minutes apart, oldest first
+  function renderHist(h){
+    const card=$s('smhist'); if(!h){ card.hidden=true; return; } card.hidden=false;
+    const s=h.samples, lo=Math.min(...s)-1, hi=Math.max(...s)+1, X=i=>i/(s.length-1)*800, Y=v=>92-(v-lo)/(hi-lo)*84;
+    const pts=s.map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ');
+    $s('smhsvg').innerHTML=`<polygon points="0,96 ${pts} 800,96" fill="rgba(52,208,189,.13)"/><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`;
+    $s('smhmax').textContent=Math.max(...s)+' °C'; $s('smhmin').textContent=Math.min(...s)+' °C';
+    $s('smhbadge').innerHTML=`now <b>${s[s.length-1]} °C</b> · low ${Math.min(...s)} · high ${Math.max(...s)}`;
+  }
+
+  // window state + rendering
+  const smBack=document.getElementById('smback'), smClose=document.getElementById('smclose'), $s=id=>document.getElementById(id);
+  let smK=null, smPv='real', smF='all', smFrom=null;
+  function renderSmart(){
+    const nv=!!SM_NV[smK], v=(nv?nvmeView:sataView)(smK,smPv);
+    $s('smtitle').innerHTML=`<span class="mono">${smK}</span><span class="mmodel">${v.model}</span>`; $s('smsub').textContent=v.sub;
+    const lab={ok:'OK',warn:'Warning',crit:'Failing'}[v.state]; $s('smbadge').className='hbadge '+v.state; $s('smbadge').innerHTML='<i></i>'+lab;
+    $s('smverdict').className='verdict '+v.state;
+    $s('smverdict').innerHTML=v.state==='ok'
+      ?(smPv==='limited'?'<b>No problems found in what this drive reports.</b> Its self-assessment passed.':'<b>No problems found.</b> The drive’s self-assessment passed and no attribute is outside its limits.')
+      :'<ul>'+v.R.map(([l,t])=>`<li><i style="background:${SC[l]}"></i><span>${t}</span></li>`).join('')+'</ul>';
+    $s('smnotice').hidden=!v.notice; $s('smnotice').textContent=v.notice;
+    $s('smcards').innerHTML=v.cards.map(c=>`<div class="stat${c.na?' na':''}"${c.src?` title="Source: ${c.src}"`:''}><div class="stripe" style="background:${SC[c.lv]}"></div><div class="l">${c.l}</div><div class="big">${c.v}${c.u?`<span class="u">${c.u}</span>`:''}</div><div class="s">${c.s||''}</div></div>`).join('');
+    renderHist(v.hist);
+    $s('smident').innerHTML=kvHtml(v.ident); $s('smlogs').innerHTML=kvHtml(v.logs); $s('smnote').textContent=v.note;
+    $s('smttl').textContent=v.ttl;
+    const rows=smF==='crit'?v.rows.filter(r=>r.crit):v.rows;
+    $s('smtable').innerHTML=`<thead><tr>${v.thead}</tr></thead><tbody>${rows.map(r=>`<tr>${r.html}</tr>`).join('')}</tbody>`;
+    $s('smfoot').textContent='Read with smartctl 7.4 at 23:47:45 · cached for up to 30 s · serial numbers and WWNs are masked in this mockup';
+    $s('smseg').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.f===smF));
+    $s('smdemo').querySelectorAll('button').forEach(b=>{ b.classList.toggle('on',b.dataset.pv===smPv);
+      if(b.dataset.pv==='limited'){ b.disabled=nv; b.title=nv?'NVMe drives always report the same standard health log':'Simulate a drive of another brand that reports little'; } });
+  }
+  function openSmart(k,from){ smK=k; smPv='real'; smF='all'; smFrom=from; renderSmart(); smBack.hidden=false; document.body.style.overflow='hidden';
+    smBack.querySelector('.mbody').scrollTop=0; smClose.focus(); }
+  function closeSmart(){ smBack.hidden=true; document.body.style.overflow=''; if(smFrom) smFrom.focus(); }
+  document.querySelectorAll('#dsum .dchip').forEach(b=>{ if(!(b.dataset.disk in SM_NV||b.dataset.disk in SM_SA)){ b.setAttribute('aria-disabled','true'); b.dataset.tip='S.M.A.R.T. not available'; } });
+  document.getElementById('dsum').addEventListener('click',e=>{ const b=e.target.closest('.dchip'); if(b&&!b.hasAttribute('aria-disabled')) openSmart(b.dataset.disk,b); });
+  smClose.addEventListener('click',closeSmart);
+  smBack.addEventListener('mousedown',e=>{ if(e.target===smBack) closeSmart(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!smBack.hidden) closeSmart(); });
+  $s('smseg').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b){ smF=b.dataset.f; renderSmart(); } });
+  $s('smdemo').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b&&!b.disabled){ smPv=b.dataset.pv; renderSmart(); } });
+
+  step(); step();
+  if(!RM) setInterval(step,1200);
+})();
+</script>

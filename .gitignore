@@ -1,0 +1,14 @@
+# Generated: rebuilt by `make frontend` / `make build-arm64` (or `npm ci`)
+node_modules/
+/dist/
+/exporter/web/dist/
+
+# Local tooling and editor/OS files
+/.claude/
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# Local configuration (the example in deploy/native/ is tracked)
+.env

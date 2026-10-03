@@ -1,0 +1,846 @@
+<title>RkTopNG Mobile</title>
+<meta name="description" content="Mobile mockup of the RkTopNG dashboard for the CM3588 (RK3588).">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    color-scheme: dark;
+    --page:#05080b; --bg:#0a0e13; --surface:#121b24; --inset:#0e161e;
+    --border:#1e2a35; --border-2:#2a3948;
+    --text:#e8eef4; --muted:#8a97a5; --faint:#5c6875;
+    --accent:#34d0bd; --good:#46c25a; --warn:#e6b34a; --orange:#eb8b3a; --crit:#f2564d; --info:#5aa2f0;
+    --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+    --sans:"IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    --r:14px; --r-sm:9px;
+  }
+  *{box-sizing:border-box}
+  body{ margin:0; background:var(--page); color:var(--text); font-family:var(--sans); font-size:14px; line-height:1.45;
+    background-image:radial-gradient(600px 400px at 50% -5%, #12222c 0%, transparent 60%); }
+  .mono{ font-family:var(--mono); font-variant-numeric:tabular-nums; }
+
+  /* phone frame so the mobile layout reads as a phone even on a wide screen */
+  .phone{ max-width:400px; margin:22px auto; background:var(--bg); border:1px solid var(--border-2);
+    border-radius:30px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,.5); }
+  .screen{ padding:0 14px 26px; }
+
+  /* header */
+  .hdr{ padding:16px 14px 12px; background:linear-gradient(180deg, rgba(18,27,36,.9), rgba(10,14,19,.6)); border-bottom:1px solid var(--border); }
+  .hrow{ display:flex; align-items:center; gap:10px; }
+  .logo{ width:34px; height:34px; object-fit:contain; flex:0 0 auto; }
+  .hrow .nm{ min-width:0; }
+  .hrow b{ font-size:17px; font-weight:700; letter-spacing:.2px; display:block; }
+  .hrow .sub{ font-size:11px; color:var(--muted); line-height:1.35; }
+  .hrow .sub .board{ color:var(--text); }
+  .live{ align-self:flex-start; margin-left:auto; text-align:right; font-size:11px; color:var(--muted); flex:0 0 auto; }
+  .live .lrow{ display:inline-flex; align-items:center; gap:6px; }
+  .live .rr{ color:var(--faint); font-family:var(--mono); font-size:10.5px; }
+  /* HEADER2 — uptime / kernel / OS (equispaced across the full width) */
+  .hinfo{ display:flex; flex-wrap:wrap; justify-content:space-between; gap:9px 10px; margin-top:12px; padding-top:11px; border-top:1px solid var(--border); }
+  .hinfo .it{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .hinfo .k{ font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  .hinfo .v{ font-family:var(--mono); font-size:11.5px; color:var(--text); }
+  .dot{ width:8px; height:8px; border-radius:50%; background:var(--good); animation:pulse 2.4s infinite; }
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(70,194,90,.45)}70%{box-shadow:0 0 0 6px rgba(70,194,90,0)}100%{box-shadow:0 0 0 0 rgba(70,194,90,0)}}
+  /* QUICK_LOOKUP gauges — open-bottom arc (CasaOS style), label sits in the gap */
+  .gauges{ display:flex; gap:7px; padding:15px 0 2px; }
+  .gwrap{ flex:1; min-width:0; }
+  .gauge{ position:relative; width:100%; max-width:132px; aspect-ratio:1; margin:0 auto; }
+  .gauge svg{ width:100%; height:100%; display:block; }
+  .gauge .trk{ fill:none; stroke:#33475b; stroke-width:9; stroke-linecap:round; }
+  .gauge .arc{ fill:none; stroke-width:9; stroke-linecap:round; transition:stroke-dasharray .5s ease, stroke .4s ease; }
+  .gauge .num{ position:absolute; left:0; right:0; top:50%; transform:translateY(-50%); text-align:center; line-height:1; }
+  .gauge .num .vv{ position:relative; display:inline-block; }
+  .gauge .num b{ font-family:var(--mono); font-size:21px; font-weight:600; letter-spacing:-.5px; }
+  .gauge .num .vv i{ position:absolute; left:100%; top:1px; margin-left:1.5px;
+    font-family:var(--mono); font-size:13px; font-weight:600; font-style:normal; color:var(--muted); }
+  .gname{ position:absolute; left:0; right:0; bottom:8%; text-align:center;
+    font-size:12.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--text); font-weight:700; }
+  /* QUICK_LOOK fan tile — thermal-zone style, no stripe, 0–100% scale */
+  .ftile{ height:94px; margin:14px 8px 2px; }
+  .ftile .big .u{ font-size:11px; color:var(--muted); margin-left:2px; }
+  .ftile .fspark{ position:absolute; top:0; left:0; width:100%; height:100%; display:block; }
+
+  section{ margin-top:14px; }
+  .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:14px; }
+  .chead{ display:flex; align-items:center; justify-content:space-between; min-height:23px; margin-bottom:12px; }
+  .chead h3{ margin:0; font-size:12px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); font-weight:600; }
+  .chead h3 small{ font-size:inherit; font-weight:400; letter-spacing:.03em; text-transform:none; color:var(--faint); }   /* qualifier next to a title, e.g. (R+W) */
+  .badge{ font-family:var(--mono); font-size:11px; color:var(--muted); background:var(--inset); border:1px solid var(--border-2); border-radius:20px; padding:3px 10px; }
+
+  .grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .dtile{ padding:10px 12px; }
+  .dtile .l{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .dtile .s{ display:flex; justify-content:space-between; gap:6px; white-space:nowrap; }   /* bus left, disk size right */
+  .dtile .big .u{ font-size:11px; color:var(--muted); margin-left:1px; }
+  .dtile.na .big{ color:var(--faint); }
+
+  /* Storage card: label-only summary of the system's disks (name, bus, size) under the volumes. Not interactive on mobile
+     (on desktop the same chips are buttons) */
+  .dsum{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:11px; padding-top:13px; border-top:1px solid var(--border-2); }
+  .dchip{ min-width:0; background:var(--inset); border:1px solid var(--border); border-radius:var(--r-sm); padding:8px 10px; }
+  .dchip .l{ display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .dchip .s{ display:flex; justify-content:space-between; gap:6px; margin-top:2px; font-family:var(--mono); font-size:11px; color:var(--faint); white-space:nowrap; }
+  .dchip .s span:last-child{ color:var(--text); }
+  .dchip .m{ display:block; margin-top:5px; font-family:var(--mono); font-size:10.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }   /* model (SMART name when available) */
+  .stat{ background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:11px 13px; position:relative; overflow:hidden; }
+  .stat .l{ font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+  .stat .big{ font-family:var(--mono); font-size:24px; font-weight:500; margin-top:2px; letter-spacing:-.5px; }
+  .stat .s{ font-size:10.5px; color:var(--faint); font-family:var(--mono); }
+  .stat canvas{ position:absolute; right:0; bottom:0; width:100%; height:26px; opacity:.85; }
+  .stripe{ position:absolute; left:0; top:0; bottom:0; width:3px; }
+
+  .row{ display:grid; grid-template-columns:58px 1fr auto; align-items:center; gap:9px; margin:7px 0; }
+  .row .n{ font-family:var(--mono); font-size:11.5px; color:var(--muted); }
+  .row .n b{ color:var(--text); }
+  .track{ height:7px; border-radius:6px; background:var(--inset); overflow:hidden; }
+  .fill{ height:100%; border-radius:6px; width:0; transition:width .5s ease; background:var(--good); }
+  .row .val{ font-family:var(--mono); font-size:11.5px; color:var(--muted); text-align:right; }
+  .row .val b{ color:var(--text); }
+  .clu{ font-size:9px; color:var(--faint); }
+
+  /* CPU section — governor pill, clusters split by a divider, vertical cluster label */
+  .badge b{ color:var(--text); font-weight:500; }   /* pill value (e.g. governor, total) brighter */
+  .cgroup{ display:flex; align-items:stretch; gap:11px; padding:11px 0; border-top:1px solid var(--border-2); }
+  .cgroup:first-child{ padding-top:2px; border-top:0; }
+  .cgroup:last-child{ padding-bottom:0; }
+  /* group label: an ordinary horizontal box stretched to the group's height; the vertical text sits in an inner span that flex centres.
+     (A vertical writing-mode box that must stretch + text-align:center is fragile: Firefox can leave the text at the top after a reflow.) */
+  .clabel{ flex:0 0 14px; display:flex; align-items:center; justify-content:center; }
+  .clabel > span{ writing-mode:vertical-rl; transform:rotate(180deg); white-space:nowrap; line-height:1;
+    font-family:var(--mono); font-size:10px; letter-spacing:.1em; color:var(--muted); font-weight:600; }
+  .crows{ flex:1; min-width:0; }
+  .crows .row{ grid-template-columns:auto 1fr auto; }   /* name hugs its text: equal gap on both sides of the bar */
+  .crows .row:first-child{ margin-top:0; }
+  .crows .row:last-child{ margin-bottom:0; }
+  /* aligned value columns: usage (3ch) + % + freq (8ch), tabular figures */
+  .crows .row .val{ display:inline-flex; align-items:baseline; justify-content:flex-end; font-variant-numeric:tabular-nums; }
+  .crows .row .val .cusg{ display:inline-block; width:3ch; text-align:right; color:var(--text); }
+  .crows .row .val .pct{ color:var(--muted); margin-left:2px; }
+  .crows .row .val .vsep{ color:var(--faint); margin:0 6px; }
+  .crows .row .track{ background:#33475b; }   /* same track color as the QUICK_LOOKUP gauges */
+  /* CPU load breakdown chart (stacked area to 100%) + legend */
+  .cpuchart{ width:100%; height:96px; display:block; background:var(--inset); border:1px solid var(--border-2); border-radius:11px; }   /* same border/radius as .mtile */
+  .clegend{ display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:12px; }
+  .clegend .li{ display:inline-flex; align-items:center; gap:7px; font-size:12px; color:var(--muted); }
+  .clegend .sw{ width:10px; height:10px; border-radius:3px; flex:0 0 auto; }
+  .clegend b{ font-family:var(--mono); color:var(--text); font-weight:500; }
+  .crows .row .val .cfreq{ display:inline-block; width:8ch; text-align:right; color:var(--faint); }
+  #accgroups .row{ grid-template-columns:66px 1fr auto; }   /* fixed name col so bars align across NPU/VPU/RGA/GPU (fits Mali-G610) */
+  .cgroup.stack{ display:block; }                       /* VPU: main rows block + extra block stacked */
+  .cgmain{ display:flex; align-items:stretch; gap:11px; }/* clabel stays centred on the 4 main rows */
+  .cgextra{ padding-left:25px; }                         /* align under the rows (clabel 14 + gap 11) */
+  .vexprow{ display:flex; justify-content:center; padding:8px 0; }
+  .vexp{ flex:0 0 auto; width:24px; height:24px; border-radius:50%; padding:0; cursor:pointer;
+    border:1px solid var(--border-2); background:var(--inset); color:var(--muted); display:grid; place-items:center; }
+  .vexp .p{ font-size:19px; line-height:1; font-weight:400; display:block; transition:transform .25s ease; }
+  .vexp.open{ color:var(--accent); border-color:var(--accent); }
+  .vexp.open .p{ transform:rotate(135deg); }   /* "+" spins into "×" */
+  /* accelerator multi-line charts */
+  /* accelerator LOAD charts: rounded tile, name+legend in the reserved top band (1/5), curves below */
+  .mblock{ margin-top:16px; }
+  .mblock:first-child{ margin-top:0; }
+  .mtile{ position:relative; background:var(--inset); border:1px solid var(--border-2); border-radius:11px; height:94px; overflow:hidden; }
+  .mtile canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .mname{ position:absolute; top:0; left:10px; height:20%; display:flex; align-items:center; z-index:1;
+    font-family:var(--mono); font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text); }
+  .mname i{ margin-left:8px; font-style:normal; font-weight:400; text-transform:none; letter-spacing:0; font-size:10.5px; color:var(--faint); }   /* driver version next to a tile name */
+  .mleg{ position:absolute; top:0; right:10px; height:20%; z-index:1; display:flex; align-items:center; gap:10px; justify-content:flex-end; max-width:calc(100% - 64px); }
+  .mleg .lg{ display:inline-flex; align-items:center; gap:5px; font-family:var(--mono); font-size:10px; color:var(--muted); white-space:nowrap; }
+  .mleg .lg i{ width:11px; height:3px; border-radius:2px; flex:0 0 auto; }
+
+  /* thermal zones — full-width rows styled like the overview tiles */
+  .zrows{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }   /* two columns, as many rows as tiles */
+  .zrow{ height:76px; background:var(--inset); }
+  .zrow .stripe{ width:5px; }
+  .zrow .zspark{ height:100%; top:0; left:7px; right:auto; width:calc(100% - 7px); }   /* fills tile; 5px stripe + 2px gap */
+  .zrow .big .u{ font-size:11px; color:var(--muted); margin-left:1px; }
+  .stat .l, .stat .big, .stat .s{ position:relative; z-index:1; }   /* keep text above the bg sparkline */
+
+  .memline{ display:flex; justify-content:space-between; font-size:12px; margin-top:8px; }
+  .memline .mono{ color:var(--muted); }
+  .memline b{ color:var(--text); font-weight:500; }
+  /* MEMORY card rows (Swap / DDR Control / CMA) */
+  #memrows .row{ grid-template-columns:62px 1fr auto; }
+  #memrows .row .track{ background:#33475b; }
+  #memrows .row .val{ display:inline-flex; align-items:baseline; justify-content:flex-end; font-variant-numeric:tabular-nums; }
+  #memrows .row .val .mp{ display:inline-block; width:4ch; text-align:right; color:var(--muted); }
+  #memrows .row .val .mp b{ color:var(--text); margin-right:2px; }
+  #memrows .row .val .vsep{ color:var(--faint); margin:0 6px; }
+  #memrows .row .val .x{ display:inline-block; width:9ch; text-align:right; color:var(--faint); }
+
+  /* storage — capacity + disk I/O rows reuse the CPU/accelerator group layout (clabel + bar + usage | value) */
+  #stgroups .row, #iogroups .row{ grid-template-columns:66px 1fr auto; }
+  #stgroups .crows .row .val .cfreq, #iogroups .crows .row .val .cfreq{ width:9ch; }
+  .crows.one{ display:flex; flex-direction:column; justify-content:center; }   /* single-row group: row centred on the vertical label */
+  .mleg .lg b{ color:var(--text); font-weight:500; }
+
+  /* network: one tile per interface, chart with download + upload lines */
+  .netcard{ background:var(--inset); border:1px solid var(--border); border-radius:var(--r-sm); padding:11px 12px; }
+  .netcard .ifn{ font-family:var(--mono); font-size:12px; color:var(--text); display:flex; justify-content:space-between; }
+  .netcard .ifn .ift{ color:var(--faint); }
+  .netcard canvas{ width:100%; height:48px; display:block; margin:7px 0; }
+  .netcard .rt{ display:flex; align-items:baseline; gap:12px; font-family:var(--mono); font-size:12px; }
+  .netcard .rt .dn{ color:var(--info); } .netcard .rt .up{ color:var(--accent); }
+  .netcard .rt .dn b, .netcard .rt .up b{ font-weight:600; }
+  .netcard .rt .un{ color:var(--faint); margin-left:auto; }
+
+  /* processes as cards */
+  .sortbar{ display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin:-2px -2px 6px; -webkit-overflow-scrolling:touch; }
+  .pill{ flex:0 0 auto; font-size:11.5px; padding:5px 11px; border-radius:20px; border:1px solid var(--border-2);
+    background:var(--inset); color:var(--muted); white-space:nowrap; }
+  .pill.on{ background:rgba(52,208,189,.14); border-color:var(--accent); color:var(--accent); }
+  .proc{ display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--border); }
+  .proc:first-child{ border-top:0; }
+  .proc .meta{ min-width:0; flex:1; }
+  .proc .pn{ font-family:var(--mono); font-size:13px; font-weight:600; display:flex; gap:7px; align-items:baseline; }
+  .proc .pn .pid{ color:var(--faint); font-weight:400; font-size:11px; }
+  .proc .cmd{ font-family:var(--mono); font-size:11px; color:var(--faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .proc .cmd .u{ color:var(--muted); }
+  .proc .nums{ text-align:right; font-family:var(--mono); flex:0 0 auto; }
+  .proc .nums .cpu{ font-size:14px; font-weight:600; }
+  .proc .nums .mem{ font-size:10.5px; color:var(--faint); }
+  .proc .sep{ opacity:.5; }
+
+  .foot{ text-align:center; color:var(--faint); font-size:11px; margin-top:16px; padding:0 6px; }
+
+  /* CONTROL_BAR — icon buttons, all visible (no swipe) */
+  .tabs{ display:flex; gap:6px; padding:13px 0 8px; }
+  .tab{ flex:1; min-width:0; display:grid; place-items:center; padding:9px 0; border-radius:11px;
+    border:1px solid var(--border-2); background:var(--inset); color:var(--muted); cursor:pointer; }
+  .tab svg{ width:20px; height:20px; }
+  .tab.on{ background:var(--accent); border-color:var(--accent); color:#052421; }
+  section.sec{ margin-top:12px; }
+  [hidden]{ display:none !important; }   /* local preview only: the published artifact skeleton already has this rule */
+</style>
+
+<div class="phone">
+  <div class="hdr">
+    <div class="hrow">
+      <img class="logo" src="favicon.png" alt="RkTopNG logo">
+      <div class="nm">
+        <b>RkTopNG</b>
+        <div class="sub"><span class="board">FriendlyElec CM3588</span> · Rockchip RK3588</div>
+      </div>
+      <div class="live">
+        <span class="lrow"><span class="dot"></span> live <span class="rr">- 1s</span></span>
+      </div>
+    </div>
+    <div class="hinfo">
+      <div class="it"><span class="k">uptime</span><span class="v" id="h_uptime">6d 22h 50m</span></div>
+      <div class="it"><span class="k">kernel</span><span class="v">6.1.141</span></div>
+      <div class="it"><span class="k">os</span><span class="v">Ubuntu 24.04.4 LTS</span></div>
+    </div>
+  </div>
+
+  <!-- QUICK_LOOKUP -->
+  <div class="qlk" style="padding:0 6px">
+    <div class="gauges">
+      <div class="gwrap"><div class="gauge"><svg viewBox="0 0 80 80"><circle class="trk" cx="40" cy="40" r="30" transform="rotate(150 40 40)"/><circle class="arc" id="g_soc" cx="40" cy="40" r="30" transform="rotate(150 40 40)"/></svg><div class="num"><span class="vv"><b data-g="soc">44</b><i>°C</i></span></div><div class="gname">SOC</div></div></div>
+      <div class="gwrap"><div class="gauge"><svg viewBox="0 0 80 80"><circle class="trk" cx="40" cy="40" r="30" transform="rotate(150 40 40)"/><circle class="arc" id="g_cpu" cx="40" cy="40" r="30" transform="rotate(150 40 40)"/></svg><div class="num"><span class="vv"><b data-g="cpu">3</b><i>%</i></span></div><div class="gname">CPU</div></div></div>
+      <div class="gwrap"><div class="gauge"><svg viewBox="0 0 80 80"><circle class="trk" cx="40" cy="40" r="30" transform="rotate(150 40 40)"/><circle class="arc" id="g_ram" cx="40" cy="40" r="30" transform="rotate(150 40 40)"/></svg><div class="num"><span class="vv"><b data-g="ram">28</b><i>%</i></span></div><div class="gname">RAM</div></div></div>
+    </div>
+    <div class="ftile stat">
+      <div class="l">fan</div>
+      <div class="big"><span data-t="fan">0</span><span class="u">%</span></div>
+      <div class="s" id="fanraw">0 / 255</div>
+      <canvas class="fspark" data-fs="fan"></canvas>
+    </div>
+  </div>
+
+  <div class="screen">
+
+    <nav class="tabs" id="tabs"></nav>
+
+    <!-- quick stats -->
+    <section class="sec" data-sec="overview">
+    <!-- disk temperatures: plain tiles (no charts), 3 columns x 2 rows; history lives in Storage > Disk temperature -->
+    <div class="grid3" id="ovdisks"></div>
+    </section>
+
+    <!-- CPU -->
+    <section class="sec" data-sec="cpu">
+      <div class="card">
+        <div class="chead"><h3>CPU</h3><span class="badge" id="cpuavg">governor: <b>schedutil</b></span></div>
+        <div id="cores"></div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <div class="chead"><h3>Load</h3></div>
+        <div id="cpucharts"></div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <div class="chead"><h3>Load breakdown</h3></div>
+        <canvas id="cpuchart" class="cpuchart"></canvas>
+        <div class="clegend">
+          <span class="li"><span class="sw" style="background:var(--info)"></span>user <b id="c_user">0%</b></span>
+          <span class="li"><span class="sw" style="background:var(--accent)"></span>system <b id="c_sys">0%</b></span>
+          <span class="li"><span class="sw" style="background:var(--warn)"></span>iowait <b id="c_io">0%</b></span>
+          <span class="li"><span class="sw" style="background:var(--faint)"></span>idle <b id="c_idle">0%</b></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Thermal -->
+    <section class="sec" data-sec="temp">
+      <div class="card">
+        <div class="chead"><h3>Thermal zones</h3></div>
+        <div class="zrows" id="thist"></div>
+      </div>
+    </section>
+
+    <!-- Accelerators -->
+    <section class="sec" data-sec="accel">
+      <div class="card">
+        <div class="chead"><h3>Accelerators</h3><span class="badge" id="vpusess">VPU 0 sess</span></div>
+        <div id="accgroups"></div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <div class="chead"><h3>Load</h3></div>
+        <div id="acccharts"></div>
+      </div>
+    </section>
+
+    <!-- Memory -->
+    <section class="sec" data-sec="mem">
+      <div class="card">
+        <div class="chead"><h3>Memory</h3><span class="badge">Avail: <b id="m_availpill">11.0G</b> - Total: <b>16 GB</b></span></div>
+        <div id="memrows">
+          <div class="row"><span class="n"><b>Swap</b></span><div class="track"><div class="fill" id="sw_bar" style="width:0%"></div></div><span class="val"><span class="mp"><b id="sw_pct">0</b>%</span><span class="vsep">|</span><span class="x">0K/0K</span></span></div>
+          <div class="row"><span class="n"><b>DDR Ctrl</b></span><div class="track"><div class="fill" id="dc_bar"></div></div><span class="val"><span class="mp"><b id="dc_pct">0</b>%</span><span class="vsep">|</span><span class="x" id="dc_x">528 MHz</span></span></div>
+          <div class="row"><span class="n"><b>CMA</b></span><div class="track"><div class="fill" id="cma_bar"></div></div><span class="val"><span class="mp"><b id="cma_pct">0</b>%</span><span class="vsep">|</span><span class="x" id="cma_x">14M/128M</span></span></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <div class="chead"><h3>Memory breakdown</h3></div>
+        <canvas id="memchart" class="cpuchart"></canvas>
+        <div class="clegend">
+          <span class="li"><span class="sw" style="background:var(--info)"></span>used <b id="l_used">4.8G</b></span>
+          <span class="li"><span class="sw" style="background:var(--accent)"></span>cache <b id="l_cache">3.4G</b></span>
+          <span class="li"><span class="sw" style="background:var(--faint)"></span>free <b id="l_free">7.4G</b></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Storage -->
+    <section class="sec" data-sec="storage">
+      <div class="card">
+        <div class="chead"><h3>Storage</h3><span class="badge" id="zfsbadge">ZFS: <b>2/2 online</b></span></div>
+        <div id="stgroups"></div>
+        <div class="dsum" id="dsum"></div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <div class="chead"><h3>Disk I/O <small>(R+W)</small></h3><span class="badge">6 disks</span></div>
+        <div id="iogroups"></div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <div class="chead"><h3>Throughput <small>(ΣR, ΣW)</small></h3></div>
+        <div id="iocharts"></div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <div class="chead"><h3>Disk temperature</h3></div>
+        <div class="zrows" id="dtemps"></div>
+      </div>
+    </section>
+
+    <!-- Net -->
+    <section class="card sec" data-sec="net">
+      <div class="chead"><h3>Network</h3></div>
+      <div class="netcard">
+        <div class="ifn">eth0 <span class="ift">1 GbE</span></div>
+        <canvas data-net="eth0"></canvas>
+        <div class="rt"><span class="dn">▼ <b data-t="e_dn">0.5</b></span><span class="up">▲ <b data-t="e_up">0.6</b></span><span class="un">MB/s</span></div>
+      </div>
+      <div class="netcard" style="margin-top:12px">
+        <div class="ifn">tailscale0 <span class="ift">VPN</span></div>
+        <canvas data-net="ts"></canvas>
+        <div class="rt"><span class="dn">▼ <b data-t="t_dn">74</b></span><span class="up">▲ <b data-t="t_up">107</b></span><span class="un">KB/s</span></div>
+      </div>
+    </section>
+
+    <!-- Processes -->
+    <section class="card sec" data-sec="procs">
+      <div class="chead"><h3>Processes</h3><span class="badge" id="proccount">412 task</span></div>
+      <div class="sortbar" id="sortbar"></div>
+      <div id="procs"></div>
+    </section>
+
+    <p class="foot"><b>RkTopNG</b> · mobile version (mockup) · sample CM3588 data</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const css=getComputedStyle(document.documentElement); const C=n=>css.getPropertyValue(n).trim();
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)); const rnd=(a,b)=>a+Math.random()*(b-a);
+  const loadC=p=>p>=80?C('--crit'):p>=50?C('--warn'):C('--good');
+  const tempC=t=>t>=80?C('--crit'):t>=65?C('--warn'):C('--good');
+  const put=(k,v)=>document.querySelectorAll(`[data-t="${k}"]`).forEach(e=>{const s=e.querySelector('span');(s||e).textContent=v;});
+
+  // section tabs — tap a tab to view only that section
+  const SECTIONS=[['overview','Overview'],['cpu','CPU'],['temp','Temp'],['accel','Accel'],['mem','Memory'],['storage','Storage'],['net','Network'],['procs','Processes']];
+  const secEls={}; document.querySelectorAll('.sec').forEach(s=>secEls[s.dataset.sec]=s);
+  const tabsEl=document.getElementById('tabs');
+  function showSec(k){ for(const s in secEls) secEls[s].hidden=(s!==k);
+    tabsEl.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.k===k)); }
+  const ICONS={
+    overview:'<rect x="3.5" y="3.5" width="7" height="7" rx="1.3"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.3"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.3"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.3"/>',
+    cpu:'<rect x="7" y="7" width="10" height="10" rx="1.5"/><path d="M10 3v3M14 3v3M10 18v3M14 18v3M3 10h3M3 14h3M18 10h3M18 14h3"/>',
+    temp:'<path d="M10 13.6V5a2 2 0 1 1 4 0v8.6a4 4 0 1 1-4 0z"/>',
+    accel:'<path d="M13 2 4 13h6l-1 9 9-11h-6z"/>',
+    mem:'<rect x="2.5" y="8" width="19" height="9" rx="1.5"/><path d="M6.5 8V5.8M10.5 8V5.8M14.5 8V5.8M18.5 8V5.8M6 17v2.2M18 17v2.2"/>',
+    storage:'<ellipse cx="12" cy="5.5" rx="7.5" ry="2.8"/><path d="M4.5 5.5v13c0 1.55 3.36 2.8 7.5 2.8s7.5-1.25 7.5-2.8v-13"/><path d="M4.5 12c0 1.55 3.36 2.8 7.5 2.8s7.5-1.25 7.5-2.8"/>',
+    net:'<path d="M7 16.5 3.5 13 7 9.5M3.5 13H14M17 7.5 20.5 11 17 14.5M20.5 11H10"/>',
+    procs:'<path d="M8.5 6h12M8.5 12h12M8.5 18h12M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>'
+  };
+  SECTIONS.forEach(([k,lbl])=>{ const b=document.createElement('button'); b.className='tab'; b.dataset.k=k; b.title=lbl; b.setAttribute('aria-label',lbl);
+    b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+ICONS[k]+'</svg>';
+    b.onclick=()=>showSec(k); tabsEl.appendChild(b); });
+  showSec('overview');
+
+  // gauges (QUICK_LOOKUP) — open-bottom 270° arc; length + color reflect the value
+  const GC=2*Math.PI*30;          // full circumference
+  const ARC=GC*(240/360);         // visible track = 240° (120° gap at the bottom)
+  document.querySelectorAll('.gauge .trk').forEach(t=>t.style.strokeDasharray=ARC+' '+GC);
+  function gauge(id,frac,color){ const a=document.getElementById('g_'+id); if(!a)return;
+    a.style.strokeDasharray=(clamp(frac,0,1)*ARC)+' '+GC; a.style.stroke=color; }
+  const cpuGC=p=>p>=90?C('--crit'):p>=75?C('--orange'):p>=50?C('--warn'):C('--good');
+  const ramGC=p=>p>=92?C('--crit'):p>=80?C('--orange'):p>=60?C('--warn'):C('--good');
+  const socGC=t=>t>=85?C('--crit'):t>=70?C('--orange'):t>=55?C('--warn'):C('--good');
+  function setG(id,val,frac,col){ const b=document.querySelector('[data-g="'+id+'"]'); if(b)b.textContent=val; gauge(id,frac,col); }
+
+  const gov='schedutil';   // /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+  const fmtFreq=mhz=>mhz+' MHz';
+  // octa-core RK3588: 4×A55 (little) + 2×A76 (big0) + 2×A76 (big1)
+  const cores=[['core0','A55',1],['core1','A55',1],['core2','A55',2],['core3','A55',1],['core4','A76',4],['core5','A76',3],['core6','A76',2],['core7','A76',9]];
+  const CLUSTERS=[['A55',[0,1,2,3]],['A76',[4,5]],['A76',[6,7]]];
+  const cel=document.getElementById('cores');
+  CLUSTERS.forEach(([label,idx])=>{
+    const g=document.createElement('div'); g.className='cgroup';
+    const rows=idx.map(i=>`<div class="row"><span class="n"><b>${cores[i][0]}</b></span><div class="track"><div class="fill" id="cf${i}"></div></div><span class="val"><b class="cusg" id="cv${i}">0</b><span class="pct">%</span><span class="vsep">|</span><span class="cfreq" id="cq${i}">—</span></span></div>`).join('');
+    g.innerHTML=`<div class="clabel"><span>${label}</span></div><div class="crows">${rows}</div>`;
+    cel.appendChild(g);
+  });
+  document.getElementById('cpuavg').innerHTML='governor: <b>'+gov+'</b>';
+
+  // thermal regions (soc lives in QUICK_LOOKUP): name, tile id, initial temp
+  const TZ=[['soc','z0',44.4],['little','z3',44.4],['big_0','z1',45.5],['big_1','z2',45.2],['center','z4',43.5],['gpu','z5',44.3],['npu','z6',46.0]];
+  const tState={}, tH={};
+  const thistEl=document.getElementById('thist');
+  TZ.forEach(([n,id,init])=>{ tState[n]=init; tH[n]=Array(40).fill(init);
+    const r=document.createElement('div'); r.className='stat zrow';
+    r.innerHTML=`<div class="stripe" id="zst_${n}"></div><div class="l">${n}</div><div class="big"><span data-t="${id}">${Math.round(init)}</span><span class="u">°C</span></div><canvas class="zspark" data-ts="${n}"></canvas>`;
+    thistEl.appendChild(r); });
+
+  // Accelerators — real engines (see accelerators memory). g=history group, c=line color, x=VPU extra (expandable)
+  const ENGINES=[
+    {k:'npu0',l:'core0',f:'1000 MHz',g:'npu',c:'--info'},
+    {k:'npu1',l:'core1',f:'1000 MHz',g:'npu',c:'--accent'},
+    {k:'npu2',l:'core2',f:'1000 MHz',g:'npu',c:'--warn'},
+    {k:'venc0',l:'enc0',f:'786 MHz',g:'vpu',c:'--info'},
+    {k:'venc1',l:'enc1',f:'786 MHz',g:'vpu',c:'--accent'},
+    {k:'vdec0',l:'dec0',f:'—',g:'vpu',c:'#eb8b3a'},
+    {k:'vdec1',l:'dec1',f:'—',g:'vpu',c:'--good'},
+    {k:'vjpeg0',l:'jpeg0',f:'—',x:1},{k:'vjpeg1',l:'jpeg1',f:'—',x:1},{k:'vjpeg2',l:'jpeg2',f:'—',x:1},{k:'vjpeg3',l:'jpeg3',f:'—',x:1},
+    {k:'vjpegd',l:'jpegd',f:'—',x:1},{k:'vav1d',l:'av1d',f:'—',x:1},{k:'vvdpu',l:'vdpu',f:'—',x:1},{k:'vavsd',l:'avsd',f:'—',x:1},{k:'viep',l:'iep',f:'—',x:1},
+    {k:'rga30',l:'rga3·0',f:'—',g:'rga',c:'--info'},
+    {k:'rga31',l:'rga3·1',f:'—',g:'rga',c:'--accent'},
+    {k:'rga2',l:'rga2',f:'—',g:'rga',c:'--warn'},
+    {k:'gpu',l:'Mali-G610',f:'700 MHz',g:'gpu',c:'--info'},
+  ];
+  const aState={}, engH={}; ENGINES.forEach(e=>{ aState[e.k]=0; engH[e.k]=Array(40).fill(0); });
+  const eByKeys=ks=>ENGINES.filter(e=>ks.includes(e.k));
+  // NPU/GPU DVFS: load% -> one of the 8 real OPPs 300..1000 MHz
+  const NGSTEPS=[300,400,500,600,700,800,900,1000];
+  const freqStep=load=>NGSTEPS[clamp(Math.floor(load/100*8),0,7)]+' MHz';
+  const accRow=e=>`<div class="row"><span class="n"><b>${e.l}</b></span><div class="track"><div class="fill" data-bar="${e.k}"></div></div><span class="val"><b class="cusg" data-t="${e.k}">0</b><span class="pct">%</span><span class="vsep">|</span><span class="cfreq" data-f="${e.k}">${e.f}</span></span></div>`;
+  const accEl=document.getElementById('accgroups');
+  const addGroup=(label,inner)=>{ const g=document.createElement('div'); g.className='cgroup'; g.innerHTML=`<div class="clabel"><span>${label}</span></div><div class="crows">${inner}</div>`; accEl.appendChild(g); };
+  addGroup('NPU', eByKeys(['npu0','npu1','npu2']).map(accRow).join(''));
+  // VPU: main block (clabel centred on the 4 rows) + extra block below (round expander + hidden engines)
+  { const vMain=eByKeys(['venc0','venc1','vdec0','vdec1']).map(accRow).join('');
+    const vExtra=ENGINES.filter(e=>e.x).map(accRow).join('');
+    const g=document.createElement('div'); g.className='cgroup stack';
+    g.innerHTML=`<div class="cgmain"><div class="clabel"><span>VPU</span></div><div class="crows">${vMain}</div></div>`+
+      `<div class="vexprow"><button class="vexp" id="vexp" aria-label="show all engines"><span class="p">+</span></button></div>`+
+      `<div class="cgextra"><div class="crows" id="vextra" hidden>${vExtra}</div></div>`;
+    accEl.appendChild(g); }
+  addGroup('RGA', eByKeys(['rga30','rga31','rga2']).map(accRow).join(''));
+  addGroup('GPU', eByKeys(['gpu']).map(accRow).join(''));
+  { const b=document.getElementById('vexp'), x=document.getElementById('vextra');
+    b.onclick=()=>{ const closed=x.hasAttribute('hidden');
+      if(closed){ x.removeAttribute('hidden'); b.classList.add('open'); b.setAttribute('aria-label','hide'); }
+      else { x.setAttribute('hidden',''); b.classList.remove('open'); b.setAttribute('aria-label','show all engines'); } }; }
+  // Card 2 — multi-line charts per group
+  const CHARTS=[['npu','NPU'],['vpu','VPU'],['rga','RGA'],['gpu','GPU']];
+  // kernel driver versions (soc_info npu/vpu/rga/gpu_driver): NPU, RGA = release; VPU = MPP source commit; GPU = Mali DDK. Full text in the tooltip.
+  const DRV={npu:['v0.9.8','driver NPU v0.9.8'],vpu:['c79104d','driver MPP c79104d97229 · 2025-08-25'],rga:['v1.3.10','driver RGA v1.3.10'],gpu:['g29p0','driver Mali g29p0-00eac0 (UK version 1.36)']};
+  const colOf=c=>c && c[0]==='-'?C(c):c;
+  const acEl=document.getElementById('acccharts');
+  CHARTS.forEach(([grp,label])=>{ const es=ENGINES.filter(e=>e.g===grp);
+    const leg=es.map(e=>`<span class="lg"><i style="background:${colOf(e.c)}"></i>${e.l}</span>`).join('');
+    const d=document.createElement('div'); d.className='mblock';
+    d.innerHTML=`<div class="mtile"><span class="mname">${label}<i title="${DRV[grp][1]}">${DRV[grp][0]}</i></span><span class="mleg">${leg}</span><canvas class="mspark" data-mc="${grp}"></canvas></div>`;
+    acEl.appendChild(d); });
+
+  // CPU per-core charts (same tile style as the accelerators) grouped by cluster
+  const CPUG=[
+    ['little','LITTLE',[[0,'core0','--info'],[1,'core1','--accent'],[2,'core2','--warn'],[3,'core3','--good']]],
+    ['big0','BIG_0',[[4,'core4','--info'],[5,'core5','--accent']]],
+    ['big1','BIG_1',[[6,'core6','--info'],[7,'core7','--accent']]],
+  ];
+  const coreH=cores.map(()=>Array(40).fill(0));
+  const cpucEl=document.getElementById('cpucharts');
+  CPUG.forEach(([key,label,cs])=>{
+    const leg=cs.map(([,nm,c])=>`<span class="lg"><i style="background:${colOf(c)}"></i>${nm}</span>`).join('');
+    const d=document.createElement('div'); d.className='mblock';
+    d.innerHTML=`<div class="mtile"><span class="mname">${label}</span><span class="mleg">${leg}</span><canvas class="mspark" data-cpuc="${key}"></canvas></div>`;
+    cpucEl.appendChild(d); });
+
+  // processes
+  let sortKey='cpu', sortRev=false;
+  const DESC={cpu:1,mem:1,threads:1,name:0,pid:0,user:0};   // default direction of each column (1 = biggest first)
+  const procs=[
+    {pid:7013,prog:'java',cmd:'/usr/lib/jvm/java-21-openjdk/bin/java -server …',thr:60,user:'shad0w',mem:1850,cpu:20},
+    {pid:8406,prog:'node',cmd:'node …/app/server.js',thr:11,user:'root',mem:119,cpu:1.4},
+    {pid:3769,prog:'casaos-app-mgmt',cmd:'/usr/bin/casaos-app-management …',thr:12,user:'root',mem:117,cpu:1.4},
+    {pid:2489,prog:'dockerd',cmd:'/usr/bin/dockerd -H fd:// …',thr:30,user:'root',mem:107,cpu:1.2},
+    {pid:14107,prog:'influxd',cmd:'influxd run',thr:15,user:'root',mem:106,cpu:0.9},
+    {pid:2087,prog:'casaos-local-st',cmd:'/usr/bin/casaos-local-storage …',thr:13,user:'root',mem:58,cpu:0.6},
+    {pid:1783,prog:'tailscaled',cmd:'/usr/sbin/tailscaled --state=… ',thr:15,user:'root',mem:51,cpu:0.5},
+    {pid:1724,prog:'containerd',cmd:'/usr/bin/containerd',thr:16,user:'root',mem:48,cpu:0.5},
+    {pid:6229,prog:'casaos',cmd:'/usr/bin/casaos -c …',thr:17,user:'root',mem:32,cpu:0.4},
+    {pid:2247168,prog:'rkmon',cmd:'gotty -p 7681 -w rkmon',thr:15,user:'root',mem:19,cpu:0.3},
+    {pid:105195,prog:'zsh',cmd:'-zsh',thr:1,user:'shad0w',mem:9,cpu:0.2}
+  ];
+  const sorters={cpu:(a,b)=>b.cpu-a.cpu,mem:(a,b)=>b.mem-a.mem,pid:(a,b)=>a.pid-b.pid,name:(a,b)=>a.prog.localeCompare(b.prog),user:(a,b)=>a.user.localeCompare(b.user)||b.cpu-a.cpu,threads:(a,b)=>b.thr-a.thr};
+  const sbar=document.getElementById('sortbar');
+  const PILLS=[['cpu','CPU%'],['mem','Mem'],['name','Name'],['pid','PID'],['user','User'],['threads','Thr']];
+  function renderPills(){ sbar.querySelectorAll('.pill').forEach(p=>{ const on=p.dataset.k===sortKey; p.classList.toggle('on',on);
+    p.textContent=PILLS.find(x=>x[0]===p.dataset.k)[1]+(on?((DESC[sortKey]?1:0)!==(sortRev?1:0)?' ▾':' ▴'):''); }); }
+  PILLS.forEach(([k])=>{
+    const b=document.createElement('button'); b.className='pill'; b.dataset.k=k;
+    b.onclick=()=>{ if(sortKey===k) sortRev=!sortRev; else { sortKey=k; sortRev=false; } renderPills(); renderProcs(); };   // second tap on the active button flips the order
+    sbar.appendChild(b);
+  });
+  renderPills();
+  const procsEl=document.getElementById('procs');
+  // memory label, max 5 chars: "999M" then "1.2G" … "15.3G"
+  const fmtMem=m=>m<1000?m+'M':(m/1024).toFixed(1)+'G';
+  function renderProcs(){
+    const list=[...procs].sort(sorters[sortKey]); if(sortRev) list.reverse(); list.length=Math.min(list.length,10);
+    procsEl.innerHTML=list.map(p=>`<div class="proc">
+      <div class="meta"><div class="pn">${p.prog} <span class="pid">${p.pid} <span class="sep">|</span> ${p.user}</span></div>
+      <div class="cmd">${p.cmd}</div></div>
+      <div class="nums"><div class="cpu" style="color:${p.cpu>=5?C('--warn'):'var(--text)'}">${p.cpu.toFixed(1)}%</div><div class="mem">${p.thr} <span class="sep">|</span> ${fmtMem(p.mem)}</div></div>
+    </div>`).join('');
+  }
+  renderProcs();
+
+  // ── STORAGE — real CM3588 layout: 3×NVMe (ZFS raidz1 → /DATA), 2×SATA (ZFS mirror → /SSD_Pool), eMMC (/) ──
+  const KB=1024, MBy=KB*KB, GBy=MBy*KB, TBy=GBy*KB;
+  // size label, max 5 chars: "98M" "9.5G" "10G" "1.8T"
+  const fmtSize=v=>{ const f=(x,u)=>(x<10?x.toFixed(1):Math.round(x))+u;
+    return v>=TBy?f(v/TBy,'T'):v>=GBy?f(v/GBy,'G'):v>=MBy?f(v/MBy,'M'):f(v/KB,'K'); };
+  // throughput label (decimal units, like the network card); 'idle' under 1 KB/s
+  const fmtRate=(v,idle)=>v<1e3?(idle?'idle':'0 KB/s'):v<1e6?Math.round(v/1e3)+' KB/s':v<1e8?(v/1e6).toFixed(1)+' MB/s':v<1e9?Math.round(v/1e6)+' MB/s':(v/1e9).toFixed(1)+' GB/s';
+  // capacity thresholds (proposal — to confirm, see docs/color_thresholds.md): <70 good · 70–84 warn · 85–94 orange · ≥95 crit
+  const diskGC=p=>p>=95?C('--crit'):p>=85?C('--orange'):p>=70?C('--warn'):C('--good');
+  // volumes = real mounts only (statvfs on /proc/mounts, virtual fs / overlay copies / docker graph filtered)
+  const VOLS=[
+    {g:'ZFS', m:'/DATA',     used:98*MBy,  total:1.8*TBy},
+    {g:'ZFS', m:'/SSD_Pool', used:220*MBy, total:1.8*TBy},
+    {g:'eMMC',m:'/',         used:10.8*GBy,total:52*GBy},   // df: 21% (used/(used+avail), reserved blocks excluded)
+  ];
+  const stEl=document.getElementById('stgroups');
+  ['ZFS','eMMC'].forEach(g=>{ const vs=VOLS.filter(v=>v.g===g);
+    const rows=vs.map(v=>`<div class="row"><span class="n"><b>${v.m}</b></span><div class="track"><div class="fill" data-vb="${v.m}"></div></div><span class="val"><b class="cusg" data-vp="${v.m}">0</b><span class="pct">%</span><span class="vsep">|</span><span class="cfreq" data-vx="${v.m}">—</span></span></div>`).join('');
+    const d=document.createElement('div'); d.className='cgroup';
+    d.innerHTML=`<div class="clabel"><span>${g}</span></div><div class="crows${vs.length===1?' one':''}">${rows}</div>`; stEl.appendChild(d); });
+
+  // whole disks (/sys/block), grouped by bus. r/w = bytes/s, b = busy% (from /proc/diskstats deltas)
+  const DISKS=[
+    {k:'nvme0n1',g:'NVMe'},{k:'nvme1n1',g:'NVMe'},{k:'nvme2n1',g:'NVMe'},
+    {k:'sda',g:'SATA'},{k:'sdb',g:'SATA'},
+    {k:'mmcblk2',g:'eMMC'},
+  ];
+  const IOG=['NVMe','SATA','eMMC'];
+  const ioS={}; DISKS.forEach(d=>ioS[d.k]={r:0,w:0,b:0});
+  const ioG={NVMe:{cap:900e6,act:0,wr:0},SATA:{cap:520e6,act:0,wr:0},eMMC:{cap:140e6,act:0,wr:0}};
+  const ioH={}; IOG.forEach(g=>ioH[g]={r:Array(40).fill(0),w:Array(40).fill(0)});
+  const ioEl=document.getElementById('iogroups');
+  IOG.forEach(g=>{ const ds=DISKS.filter(d=>d.g===g);
+    const rows=ds.map(d=>`<div class="row"><span class="n"><b>${d.k}</b></span><div class="track"><div class="fill" data-ib="${d.k}"></div></div><span class="val"><b class="cusg" data-ip="${d.k}">0</b><span class="pct">%</span><span class="vsep">|</span><span class="cfreq" data-ix="${d.k}">idle</span></span></div>`).join('');
+    const x=document.createElement('div'); x.className='cgroup';
+    x.innerHTML=`<div class="clabel"><span>${g}</span></div><div class="crows${ds.length===1?' one':''}">${rows}</div>`; ioEl.appendChild(x); });
+  // throughput charts: one tile per bus group, read (info) + write (accent) summed over its disks, auto-scaled
+  const iochEl=document.getElementById('iocharts');
+  IOG.forEach(g=>{ const d=document.createElement('div'); d.className='mblock';
+    d.innerHTML=`<div class="mtile"><span class="mname">${g}</span><span class="mleg"><span class="lg"><i style="background:${C('--info')}"></i>R <b data-ir="${g}">0 KB/s</b></span><span class="lg"><i style="background:${C('--accent')}"></i>W <b data-iw="${g}">0 KB/s</b></span></span><canvas class="mspark" data-io="${g}"></canvas></div>`;
+    iochEl.appendChild(d); });
+  // 1-2-5 "nice" ceiling so the auto-scale doesn't jitter every tick
+  const niceMax=v=>{ const p=Math.pow(10,Math.floor(Math.log10(v))), m=v/p; return (m<=1?1:m<=2?2:m<=5?5:10)*p; };
+  function dspark(cv,r,w){ const dpr=devicePixelRatio||1,W=cv.clientWidth,h=cv.clientHeight; if(!W)return;
+    cv.width=W*dpr;cv.height=h*dpr;const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,h);
+    const TOP=h*0.2, n=r.length, mx=niceMax(Math.max(1e6,...r,...w)), x=i=>i/(n-1)*W, y=v=>h-(v/mx)*(h-TOP);
+    g.strokeStyle='rgba(138,151,165,.16)'; g.lineWidth=1;
+    [1,.75,.5,.25].forEach(t=>{ const gy=y(mx*t); g.beginPath(); g.moveTo(0,gy+.5); g.lineTo(W,gy+.5); g.stroke(); });
+    [[r,C('--info')],[w,C('--accent')]].forEach(([d,col])=>{ g.beginPath(); d.forEach((v,i)=>i?g.lineTo(x(i),y(v)):g.moveTo(x(i),y(v)));
+      g.strokeStyle=col; g.lineWidth=1.4; g.stroke(); });
+    g.globalCompositeOperation='destination-out';
+    const f=g.createLinearGradient(0,0,W,0); f.addColorStop(0,'rgba(0,0,0,1)'); f.addColorStop(.3,'rgba(0,0,0,0)');
+    g.fillStyle=f; g.fillRect(0,0,W,h); g.globalCompositeOperation='source-over';
+    // scale label (= top gridline) on top, bottom-right of the legend band
+    g.font='600 9px "IBM Plex Mono",monospace'; g.textAlign='right'; g.textBaseline='alphabetic';
+    const lab=fmtRate(mx), tw=g.measureText(lab).width;
+    g.fillStyle='rgba(10,14,19,.5)'; g.fillRect(W-4-tw-3, TOP+2, tw+5, 11);
+    g.fillStyle='rgba(206,215,223,.95)'; g.fillText(lab, W-4, TOP+11);
+  }
+  // disk temperatures: one full-width tile per drive, same tile/scale/sparkline as the thermal zones.
+  // NVMe = hwmon nvme → temp1_input (1 s); SATA = SMART (`smartctl -j` → temperature.current), polled slowly (~30 s → stepped line).
+  // eMMC has no sensor, so 5 of the 6 disks. Same names/order as the Disk I/O card.
+  const DT=[['nvme0n1',37.9,'nvme'],['nvme1n1',34.9,'nvme'],['nvme2n1',33.9,'nvme'],['sda',33,'sata'],['sdb',33,'sata']];   // real SMART readings (attr 190): both 33 °C
+  const dtS={}, dtH={};
+  const dtEl=document.getElementById('dtemps');
+  DT.forEach(([n,init])=>{ dtS[n]=init; dtH[n]=Array(40).fill(init);
+    const r=document.createElement('div'); r.className='stat zrow';
+    r.innerHTML=`<div class="stripe" id="dst_${n}"></div><div class="l">${n}</div><div class="big"><span id="dt_${n}">${Math.round(init)}</span><span class="u">°C</span></div><canvas class="zspark" data-td="${n}"></canvas>`;
+    dtEl.appendChild(r); });
+  // Overview: the same temperatures as plain tiles, 3 cols × 2 rows (all 6 disks; eMMC has no sensor → n/a). Size = lsblk SIZE (binary units)
+  // [disk, bus, size, model (SMART name when available)]
+  const OVD=[['nvme0n1','NVMe',953.9*GBy,'Lexar SSD NM790 1TB'],['nvme1n1','NVMe',953.9*GBy,'Lexar SSD NM790 1TB'],['nvme2n1','NVMe',953.9*GBy,'Lexar SSD NM790 1TB'],['sda','SATA',1.8*TBy,'Samsung SSD 870 QVO 2TB'],['sdb','SATA',1.8*TBy,'Samsung SSD 860 QVO 2TB'],['mmcblk2','eMMC',57.6*GBy,'A3A561']];
+  const ovEl=document.getElementById('ovdisks');
+  OVD.forEach(([n,bus,size])=>{ const na=!(n in dtS), r=document.createElement('div'); r.className='stat dtile'+(na?' na':'');
+    r.innerHTML=`<div class="stripe" id="ost_${n}" style="background:${na?'var(--border-2)':socGC(dtS[n])}"></div><div class="l">${n}</div><div class="big">${na?'n/a':`<span id="ot_${n}">${Math.round(dtS[n])}</span><span class="u">°C</span>`}</div><div class="s"><span>${bus}</span><span>${fmtSize(size)}</span></div>`;   // eMMC: n/a = no temperature sensor exposed
+    ovEl.appendChild(r); });
+  // Storage card: same disks as plain boxes (name · bus · size, model), no live values, not clickable
+  const dsEl=document.getElementById('dsum');
+  OVD.forEach(([n,bus,size,model])=>{ const c=document.createElement('div'); c.className='dchip';
+    c.innerHTML=`<span class="l">${n}</span><span class="s"><span>${bus}</span><span>${fmtSize(size)}</span></span><span class="m" title="${model}">${model}</span>`; dsEl.appendChild(c); });
+
+  // CPU load breakdown history (percent of total, per sample)
+  const CN=40; const cpuH={user:Array(CN).fill(0),sys:Array(CN).fill(0),io:Array(CN).fill(0),idle:Array(CN).fill(100)};
+  // stacked area to 100%: user + system + iowait bands, idle fills the rest
+  function drawStack(cv){ const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight; if(!w)return;
+    cv.width=w*dpr;cv.height=h*dpr;const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+    const n=CN,x=i=>i/(n-1)*w,Y=v=>h-(v/100)*h;
+    const cum=Array(n).fill(0);
+    const bands=[['user',C('--info')+'e0'],['sys',C('--accent')+'e0'],['io',C('--warn')+'e0'],['idle',C('--faint')+'33']];
+    bands.forEach(([k,col])=>{ g.beginPath();
+      for(let i=0;i<n;i++){ const t=(k==='idle')?100:cum[i]+cpuH[k][i]; const px=x(i),py=Y(t); i?g.lineTo(px,py):g.moveTo(px,py); }
+      for(let i=n-1;i>=0;i--){ g.lineTo(x(i),Y(cum[i])); }
+      g.closePath(); g.fillStyle=col; g.fill();
+      if(k!=='idle') for(let i=0;i<n;i++) cum[i]+=cpuH[k][i]; });
+  }
+  // memory stacked breakdown (percent of Total): used + cached + buffers, free fills the rest
+  const memHist={used:Array(CN).fill(29.5),cache:Array(CN).fill(22.4)};   // cache = cached + buffers
+  function drawMem(cv){ const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight; if(!w)return;
+    cv.width=w*dpr;cv.height=h*dpr;const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+    const n=CN,x=i=>i/(n-1)*w,Y=v=>h-(v/100)*h;
+    const cum=Array(n).fill(0);
+    const bands=[['used',C('--info')+'e0'],['cache',C('--accent')+'e0'],['free',C('--faint')+'33']];
+    bands.forEach(([k,col])=>{ g.beginPath();
+      for(let i=0;i<n;i++){ const t=(k==='free')?100:cum[i]+memHist[k][i]; const px=x(i),py=Y(t); i?g.lineTo(px,py):g.moveTo(px,py); }
+      for(let i=n-1;i>=0;i--){ g.lineTo(x(i),Y(cum[i])); }
+      g.closePath(); g.fillStyle=col; g.fill();
+      if(k!=='free') for(let i=0;i<n;i++) cum[i]+=memHist[k][i]; });
+  }
+  // thermal sparkline: FIXED scale 15–115°C (gridlines 15/40/65/90/115); constant blue line (= "user")
+  const TTICKS=[15,40,65,90,115], TLO=15, THI=115;
+  function tspark(cv,d){ const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight; if(!w)return;
+    cv.width=w*dpr;cv.height=h*dpr;const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+    const col=C('--info');
+    const x=i=>i/(d.length-1)*w, y=v=>h-((clamp(v,TLO,THI)-TLO)/(THI-TLO))*h;
+    // gridlines 40/65/90 (15/115 = tile edges)
+    g.strokeStyle='rgba(138,151,165,.18)'; g.lineWidth=1;
+    TTICKS.forEach(t=>{ if(t===TLO||t===THI) return; const gy=y(t); g.beginPath(); g.moveTo(0,gy+.5); g.lineTo(w,gy+.5); g.stroke(); });
+    // area + line
+    g.beginPath();d.forEach((v,i)=>i?g.lineTo(x(i),y(v)):g.moveTo(x(i),y(v)));
+    g.lineTo(w,h);g.lineTo(0,h);g.closePath();const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,col+'4d');gr.addColorStop(1,col+'00');g.fillStyle=gr;g.fill();
+    g.beginPath();d.forEach((v,i)=>i?g.lineTo(x(i),y(v)):g.moveTo(x(i),y(v)));g.strokeStyle=col;g.lineWidth=1.5;g.stroke();
+    // fade the whole plot (gridlines + area + line) out toward the left, behind name/value
+    g.globalCompositeOperation='destination-out';
+    const fade=g.createLinearGradient(0,0,w,0);
+    fade.addColorStop(0,'rgba(0,0,0,1)'); fade.addColorStop(.42,'rgba(0,0,0,0)');
+    g.fillStyle=fade; g.fillRect(0,0,w,h);
+    g.globalCompositeOperation='source-over';
+    // scale labels ON TOP, with a subtle backdrop for legibility
+    g.font='600 9px "IBM Plex Mono",monospace'; g.textBaseline='alphabetic'; g.textAlign='right';
+    TTICKS.forEach(t=>{ if(t===THI) return;   // no 115 label (line = top edge)
+      const gy=y(t), by=Math.min(h-2,Math.max(8,gy-4)), lab=t+'°', tw=g.measureText(lab).width, tx=w-4;
+      g.fillStyle='rgba(10,14,19,.5)'; g.fillRect(tx-tw-3, by-9, tw+5, 11);
+      g.fillStyle='rgba(206,215,223,.95)'; g.fillText(lab, tx, by); });
+  }
+
+  // multi-line utilisation chart: FIXED 0–100%; top 1/5 reserved for name+legend, no labels; one line per engine
+  function mspark(cv,series){ const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight; if(!w)return;
+    cv.width=w*dpr;cv.height=h*dpr;const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+    const TOP=h*0.2, x=(i,n)=>i/(n-1)*w, y=v=>h-(clamp(v,0,100)/100)*(h-TOP);
+    // gridlines 100/75/50/25 -> 5 bands, top band is the legend area (100% line = its bottom edge)
+    g.strokeStyle='rgba(138,151,165,.16)'; g.lineWidth=1;
+    [100,75,50,25].forEach(t=>{ const gy=y(t); g.beginPath(); g.moveTo(0,gy+.5); g.lineTo(w,gy+.5); g.stroke(); });
+    series.forEach(s=>{ const d=s.data,n=d.length; g.beginPath(); d.forEach((v,i)=>i?g.lineTo(x(i,n),y(v)):g.moveTo(x(i,n),y(v)));
+      g.strokeStyle=s.color; g.lineWidth=1.4; g.stroke(); });
+    // fade the curves out toward the left
+    g.globalCompositeOperation='destination-out';
+    const f=g.createLinearGradient(0,0,w,0); f.addColorStop(0,'rgba(0,0,0,1)'); f.addColorStop(.3,'rgba(0,0,0,0)');
+    g.fillStyle=f; g.fillRect(0,0,w,h); g.globalCompositeOperation='source-over';
+  }
+
+  // fan sparkline: fixed 0–100% scale (gridlines 25/50/75; 0/100 = tile edges), single blue line
+  const FTICKS=[0,25,50,75,100];
+  function fanspark(cv,d){ const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight; if(!w)return;
+    cv.width=w*dpr;cv.height=h*dpr;const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+    const col=C('--info'), x=i=>i/(d.length-1)*w, y=v=>h-(clamp(v,0,100)/100)*h;
+    g.strokeStyle='rgba(138,151,165,.16)'; g.lineWidth=1;
+    FTICKS.forEach(t=>{ if(t===0||t===100) return; const gy=y(t); g.beginPath(); g.moveTo(0,gy+.5); g.lineTo(w,gy+.5); g.stroke(); });
+    g.beginPath();d.forEach((v,i)=>i?g.lineTo(x(i),y(v)):g.moveTo(x(i),y(v)));
+    g.lineTo(w,h);g.lineTo(0,h);g.closePath();const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,col+'4d');gr.addColorStop(1,col+'00');g.fillStyle=gr;g.fill();
+    g.beginPath();d.forEach((v,i)=>i?g.lineTo(x(i),y(v)):g.moveTo(x(i),y(v)));g.strokeStyle=col;g.lineWidth=1.5;g.stroke();
+    g.globalCompositeOperation='destination-out';
+    const fade=g.createLinearGradient(0,0,w,0); fade.addColorStop(0,'rgba(0,0,0,1)'); fade.addColorStop(.42,'rgba(0,0,0,0)');
+    g.fillStyle=fade; g.fillRect(0,0,w,h); g.globalCompositeOperation='source-over';
+    g.font='600 9px "IBM Plex Mono",monospace'; g.textBaseline='alphabetic'; g.textAlign='right';
+    FTICKS.forEach(t=>{ if(t===100) return; const gy=y(t), by=Math.min(h-2,Math.max(8,gy-4)), lab=t+'%', tw=g.measureText(lab).width, tx=w-4;
+      g.fillStyle='rgba(10,14,19,.5)'; g.fillRect(tx-tw-3, by-9, tw+5, 11);
+      g.fillStyle='rgba(206,215,223,.95)'; g.fillText(lab, tx, by); });
+  }
+  const fanH=Array(40).fill(0); let fan=24;
+
+  // network: per-interface chart with 2 lines (download=info, upload=accent); auto-scaled y
+  function netspark(cv,dn,up){ const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight; if(!w)return;
+    cv.width=w*dpr;cv.height=h*dpr;const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+    const n=dn.length, mx=Math.max(1,...dn,...up), x=i=>i/(n-1)*w, y=v=>h-(v/mx)*(h-2)-1;
+    const line=(d,col)=>{ g.beginPath(); d.forEach((v,i)=>i?g.lineTo(x(i),y(v)):g.moveTo(x(i),y(v)));
+      g.strokeStyle=col; g.lineWidth=1.5; g.stroke(); };
+    line(dn,C('--info')); line(up,C('--accent'));
+  }
+  const netH={ed:Array(40).fill(0),eu:Array(40).fill(0),td:Array(40).fill(0),tu:Array(40).fill(0)};
+  let eDn=0.5,eUp=0.6,tDn=74,tUp=107;   // eth MB/s, tailscale KB/s
+
+  let soc=44.4,cpu=3,ram=28,ddr=1,tick=0;
+  const MEMTOTAL=15.6; let memUsed=4.6, memCache=3.4;   // GB; RAM% = (Total − Available)/Total
+  let cmaUsed=14;   // MB of 128 (CMA)
+  function step(){ tick++;
+    soc=clamp(soc+rnd(-.4,.4),42,58); cpu=clamp(cpu+rnd(-3,3.4),1,72);
+    // memory model: RAM% = (Total − Available)/Total = used (non-reclaimable) / Total
+    memUsed=clamp(memUsed+rnd(-.12,.12),3.4,8.5); memCache=clamp(memCache+rnd(-.18,.18),1.6,5.2);
+    const memBuf=0.09, memFree=clamp(MEMTOTAL-memUsed-memCache-memBuf,0.05,MEMTOTAL), memAvail=memFree+memCache+memBuf;
+    ram=(MEMTOTAL-memAvail)/MEMTOTAL*100;
+    memHist.used.push(memUsed/MEMTOTAL*100); memHist.used.shift();
+    memHist.cache.push((memCache+memBuf)/MEMTOTAL*100); memHist.cache.shift();
+    drawMem(document.getElementById('memchart'));
+    { const S=(id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+      S('l_used',memUsed.toFixed(1)+'G'); S('l_cache',(memCache+memBuf).toFixed(1)+'G'); S('l_free',memFree.toFixed(1)+'G');
+      S('m_availpill',memAvail.toFixed(1)+'G');
+      // DDR Control: dmc load + freq (OPP by load)
+      const dcEl=document.getElementById('dc_bar'); if(dcEl){ dcEl.style.width=ddr+'%'; dcEl.style.background=loadC(ddr); }
+      S('dc_pct',Math.round(ddr)); S('dc_x',(ddr<8?528:ddr<22?1068:ddr<38?1560:2112)+' MHz');
+      // CMA: used/total MB
+      cmaUsed=clamp(cmaUsed+rnd(-2,2.2),2,110); const cpct=Math.round(cmaUsed/128*100);
+      const cmaEl=document.getElementById('cma_bar'); if(cmaEl){ cmaEl.style.width=cpct+'%'; cmaEl.style.background=loadC(cpct); }
+      S('cma_pct',cpct); S('cma_x',Math.round(cmaUsed)+'M/128M'); }
+    ddr=clamp(ddr+rnd(-2,3),0,45);
+    // disk temps: NVMe drift + heat from I/O on the bus; SATA only refreshes every ~30 s (SMART poll) and holds in between
+    DT.forEach(([n,,bus])=>{
+      if(bus==='nvme') dtS[n]=clamp(dtS[n]+rnd(-.25,.25)+(ioG.NVMe.act>.2?.15:-.02),31,52);
+      else if(tick%25===0) dtS[n]=clamp(dtS[n]+rnd(-1,1)+(ioG.SATA.act>.2?.8:-.1),28,50);
+      dtH[n].push(dtS[n]); dtH[n].shift();
+      document.getElementById('dt_'+n).textContent=Math.round(dtS[n]);
+      document.getElementById('dst_'+n).style.background=socGC(dtS[n]);   // same temperature table as SoC/thermal zones — see docs/color_thresholds.md
+      document.getElementById('ot_'+n).textContent=Math.round(dtS[n]); document.getElementById('ost_'+n).style.background=socGC(dtS[n]);   // Overview tiles
+      tspark(document.querySelector(`[data-td="${n}"]`), dtH[n]); });
+    setG('soc',Math.round(soc), soc/100, socGC(soc));
+    setG('cpu',Math.round(cpu), cpu/100, cpuGC(cpu));
+    setG('ram',Math.round(ram), ram/100, ramGC(ram));
+    fan=clamp(fan+rnd(-4,4.3),0,100); fanH.push(fan); fanH.shift();
+    { const fe=document.querySelector('[data-t="fan"]'); if(fe) fe.textContent=Math.round(fan);
+      const fr=document.getElementById('fanraw'); if(fr) fr.textContent=Math.round(fan/100*255)+' / 255'; }
+    fanspark(document.querySelector('[data-fs="fan"]'), fanH);
+
+    cores.forEach((c,i)=>{ c[2]=clamp(c[2]+rnd(-4,4.3),0,c[1]==='A76'?95:60);
+      const f=document.getElementById('cf'+i); f.style.width=c[2]+'%'; f.style.background=loadC(c[2]);
+      document.getElementById('cv'+i).textContent=Math.round(c[2]);
+      coreH[i].push(c[2]); coreH[i].shift();
+      if(tick%3===0){ const tbl=c[1]==='A76'?[600,816,1008,1416,1800,2016,2256,2400]:[408,600,816,1008,1200,1416,1608,1800];
+        document.getElementById('cq'+i).textContent=fmtFreq(tbl[Math.floor(rnd(0,tbl.length))]); }});
+    CPUG.forEach(([key,,cs])=>{ const cv=document.querySelector(`[data-cpuc="${key}"]`); if(!cv) return;
+      mspark(cv, cs.map(([i,,c])=>({data:coreH[i],color:colOf(c)}))); });
+
+    // CPU load breakdown: split overall busy% into user/system/iowait, remainder idle
+    const busy=clamp(cores.reduce((a,c)=>a+c[2],0)/cores.length,0,100);
+    const u=busy*(0.60+rnd(-.05,.05)), s=busy*(0.30+rnd(-.04,.04)), io=busy*(0.06+rnd(-.03,.03));
+    const idle=clamp(100-u-s-io,0,100);
+    cpuH.user.push(u);cpuH.user.shift(); cpuH.sys.push(s);cpuH.sys.shift();
+    cpuH.io.push(io);cpuH.io.shift(); cpuH.idle.push(idle);cpuH.idle.shift();
+    drawStack(document.getElementById('cpuchart'));
+    document.getElementById('c_user').textContent=Math.round(u)+'%';
+    document.getElementById('c_sys').textContent=Math.round(s)+'%';
+    document.getElementById('c_io').textContent=Math.round(io)+'%';
+    document.getElementById('c_idle').textContent=Math.round(idle)+'%';
+
+    // accelerators: per-engine usage (random walk), bars, sessions, multi-line history
+    const spike=tick%7===0;
+    ENGINES.forEach(e=>{ let hi=2;
+      if(e.k.startsWith('npu')) hi=3;
+      else if(e.k.startsWith('venc')) hi=spike?70:4;
+      else if(e.k.startsWith('vdec')) hi=spike?80:6;
+      else if(e.k==='gpu') hi=40;
+      const nv=aState[e.k]=clamp(aState[e.k]+(rnd(0,hi)-aState[e.k])*.4,0,99);
+      document.querySelectorAll(`[data-t="${e.k}"]`).forEach(el=>el.textContent=Math.round(nv));
+      const b=document.querySelector(`[data-bar="${e.k}"]`); if(b){ b.style.width=nv+'%'; b.style.background=loadC(nv); }
+      if(e.k==='gpu'){ const f=document.querySelector('[data-f="gpu"]'); if(f) f.textContent=freqStep(nv); }
+      engH[e.k].push(nv); engH[e.k].shift(); });
+    // NPU: single shared devfreq -> derive from the busiest core, apply to all 3 rows
+    { const nf=freqStep(Math.max(aState.npu0,aState.npu1,aState.npu2)); ['npu0','npu1','npu2'].forEach(k=>{ const f=document.querySelector(`[data-f="${k}"]`); if(f) f.textContent=nf; }); }
+    const vsess=['venc0','venc1','vdec0','vdec1'].filter(k=>aState[k]>5).length;
+    const vsEl=document.getElementById('vpusess'); if(vsEl) vsEl.textContent='VPU '+vsess+' sess';
+    CHARTS.forEach(([grp])=>{ const cv=document.querySelector(`[data-mc="${grp}"]`); if(!cv) return;
+      mspark(cv, ENGINES.filter(e=>e.g===grp).map(e=>({data:engH[e.k],color:colOf(e.c)}))); });
+
+    TZ.forEach(([n,id])=>{
+      const v=tState[n]=(n==='soc') ? soc : clamp(tState[n]+rnd(-.5,.5)+(soc-44.4)*.06, 36, 92);
+      const col=socGC(v);   // stripe color = current temp — see docs/color_thresholds.md
+      const e=document.querySelector(`[data-t="${id}"]`); if(e) e.textContent=Math.round(v);
+      const st=document.getElementById('zst_'+n); if(st) st.style.background=col;
+      tH[n].push(v); tH[n].shift();
+      tspark(document.querySelector(`[data-ts="${n}"]`), tH[n]);
+    });
+
+    // network throughput (random walk) + 2-line charts
+    eDn=clamp(eDn+rnd(-.5,.55),0,12); eUp=clamp(eUp+rnd(-.35,.4),0,8);
+    tDn=clamp(tDn+rnd(-28,30),0,400); tUp=clamp(tUp+rnd(-26,28),0,320);
+    netH.ed.push(eDn);netH.ed.shift(); netH.eu.push(eUp);netH.eu.shift();
+    netH.td.push(tDn);netH.td.shift(); netH.tu.push(tUp);netH.tu.shift();
+    netspark(document.querySelector('[data-net="eth0"]'), netH.ed, netH.eu);
+    netspark(document.querySelector('[data-net="ts"]'), netH.td, netH.tu);
+    put('e_dn',eDn.toFixed(1)); put('e_up',eUp.toFixed(1));
+    put('t_dn',Math.round(tDn)); put('t_up',Math.round(tUp));
+    // storage: capacity grows slowly; ZFS pool state (/proc/spl/kstat/zfs/<pool>/state)
+    VOLS.forEach(v=>{ v.used=clamp(v.used+rnd(-.2,.6)*MBy,0,v.total);
+      const p=v.used/v.total*100, b=document.querySelector(`[data-vb="${v.m}"]`);
+      b.style.width=Math.max(p,.6)+'%'; b.style.background=diskGC(p);
+      document.querySelector(`[data-vp="${v.m}"]`).textContent=p<1?'<1':Math.round(p);
+      document.querySelector(`[data-vx="${v.m}"]`).textContent=fmtSize(v.used)+'/'+fmtSize(v.total); });
+    { const POOLS=['ONLINE','ONLINE'], ok=POOLS.filter(s=>s==='ONLINE').length, zb=document.getElementById('zfsbadge');
+      zb.innerHTML='ZFS: <b style="color:'+(ok===POOLS.length?'var(--text)':C('--crit'))+'">'+ok+'/'+POOLS.length+' online</b>'; }
+    // disk I/O: bursts shared across a group (raidz1 stripes / mirror writes), small background trickle
+    IOG.forEach(g=>{ const G=ioG[g]; G.act*=.5; if(G.act<.003) G.act=0;
+      if(Math.random()<(g==='eMMC'?.1:.07)){ G.act=rnd(.05,.9); G.wr=Math.random()<.5; } });
+    DISKS.forEach(d=>{ const G=ioG[d.g], s=ioS[d.k], jit=rnd(.8,1.1), tot=G.act*G.cap*jit;
+      s.r=(G.wr?tot*.04:tot)+rnd(0,8e3); s.w=(G.wr?tot:tot*.04)+rnd(0,40e3);
+      s.b=clamp(G.act*100*jit+rnd(0,1.5),0,100);
+      const b=document.querySelector(`[data-ib="${d.k}"]`); b.style.width=s.b+'%'; b.style.background=loadC(s.b);
+      document.querySelector(`[data-ip="${d.k}"]`).textContent=Math.round(s.b);
+      document.querySelector(`[data-ix="${d.k}"]`).textContent=fmtRate(s.r+s.w,true); });
+    IOG.forEach(g=>{ const ds=DISKS.filter(d=>d.g===g), r=ds.reduce((a,d)=>a+ioS[d.k].r,0), w=ds.reduce((a,d)=>a+ioS[d.k].w,0), H=ioH[g];
+      H.r.push(r);H.r.shift(); H.w.push(w);H.w.shift();
+      document.querySelector(`[data-ir="${g}"]`).textContent=fmtRate(r); document.querySelector(`[data-iw="${g}"]`).textContent=fmtRate(w);
+      dspark(document.querySelector(`[data-io="${g}"]`), H.r, H.w); });
+
+    procs.forEach(p=>{ p.cpu=clamp(p.cpu+rnd(-.4,.5),0,p.mem>90?9:3); });
+    if(tick%4===0) renderProcs();
+  }
+  step(); step();
+  if(!RM) setInterval(step,1200);
+})();
+</script>

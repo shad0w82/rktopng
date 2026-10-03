@@ -1,0 +1,36 @@
+name: rktopng
+
+services:
+  exporter:
+    build:
+      context: .                       # the repo root: the image builds both frontend/ and exporter/
+      dockerfile: Dockerfile
+    container_name: rktopng-exporter
+    restart: unless-stopped
+    # Root + recursive bind mounts of host /proc and /sys let the exporter read
+    # everything, including debugfs (NPU/RGA load) which is root-only.
+    user: "0:0"
+    # privileged gives the container the host's /dev (needed by `smartctl` to read
+    # SMART from the disks) and root-level access to debugfs. Without it the
+    # dashboard still works, minus SATA temperatures/health and NPU/RGA load.
+    privileged: true
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host/root:ro          # for filesystem usage (statfs)
+      - /etc/os-release:/host/os-release:ro   # host OS name
+      - /etc/passwd:/host/passwd:ro           # user names of the processes
+    environment:
+      RKTOP_PROC_PATH: /host/proc
+      RKTOP_SYS_PATH: /host/sys
+      RKTOP_ROOTFS_PATH: /host/root
+      RKTOP_OSRELEASE_PATH: /host/os-release
+      RKTOP_PASSWD_PATH: /host/passwd
+      RKTOP_PORT: "9888"
+      # RKTOP_BASE_PATH: /rktopng       # serve everything under /rktopng/ (a reverse proxy that keeps the prefix)
+      # RKTOP_AUTH_USER: admin          # ask for a password on EVERYTHING, /metrics included.
+      # RKTOP_AUTH_PASSWORD: change-me  # Set both or neither (only one stops the start).
+      # RKTOP_SMART: "off"            # uncomment to disable SMART polling
+      # RKTOP_SMART_INTERVAL: "60s"
+    ports:
+      - "9888:9888"   # the dashboard and the API: http://<board>:9888/

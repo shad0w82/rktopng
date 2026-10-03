@@ -1,0 +1,121 @@
+{
+ "json_format_version": [
+  1,
+  0
+ ],
+ "smartctl": {
+  "version": [
+   7,
+   4
+  ],
+  "pre_release": false,
+  "svn_revision": "5530",
+  "platform_info": "aarch64-linux-6.1.141",
+  "build_info": "(local build)",
+  "messages": [
+   {
+    "string": "Read Self-test Log failed: Invalid Field in Command (0x2002)",
+    "severity": "error"
+   }
+  ],
+  "exit_status": 4
+ },
+ "local_time": {
+  "time_t": 1790980858,
+  "asctime": "Sat Oct  3 00:40:58 2026 CEST"
+ },
+ "device": {
+  "name": "/dev/nvme0n1",
+  "info_name": "/dev/nvme0n1",
+  "type": "nvme",
+  "protocol": "NVMe"
+ },
+ "model_name": "Lexar SSD NM790 1TB",
+ "serial_number": "TESTSERIAL0001",
+ "firmware_version": "11296",
+ "nvme_pci_vendor": {
+  "id": 7575,
+  "subsystem_id": 7575
+ },
+ "nvme_ieee_oui_identifier": 13300315,
+ "nvme_total_capacity": 1024209543168,
+ "nvme_unallocated_capacity": 0,
+ "nvme_controller_id": 0,
+ "nvme_version": {
+  "string": "1.4",
+  "value": 66560
+ },
+ "nvme_number_of_namespaces": 1,
+ "nvme_namespaces": [
+  {
+   "id": 1,
+   "size": {
+    "blocks": 2000409264,
+    "bytes": 1024209543168
+   },
+   "capacity": {
+    "blocks": 2000409264,
+    "bytes": 1024209543168
+   },
+   "utilization": {
+    "blocks": 2000409264,
+    "bytes": 1024209543168
+   },
+   "formatted_lba_size": 512,
+   "eui64": {
+    "oui": 13300315,
+    "ext_id": 1
+   }
+  }
+ ],
+ "user_capacity": {
+  "blocks": 2000409264,
+  "bytes": 1024209543168
+ },
+ "logical_block_size": 512,
+ "smart_support": {
+  "available": true,
+  "enabled": true
+ },
+ "smart_status": {
+  "passed": true,
+  "nvme": {
+   "value": 0
+  }
+ },
+ "nvme_smart_health_information_log": {
+  "critical_warning": 0,
+  "temperature": 38,
+  "available_spare": 100,
+  "available_spare_threshold": 10,
+  "percentage_used": 0,
+  "data_units_read": 73233,
+  "data_units_written": 12790374,
+  "host_reads": 1445320,
+  "host_writes": 113920140,
+  "controller_busy_time": 303,
+  "power_cycles": 189,
+  "power_on_hours": 7247,
+  "unsafe_shutdowns": 104,
+  "media_errors": 0,
+  "num_err_log_entries": 0,
+  "warning_temp_time": 0,
+  "critical_comp_time": 0,
+  "temperature_sensors": [
+   38,
+   32
+  ]
+ },
+ "temperature": {
+  "current": 38
+ },
+ "power_cycle_count": 189,
+ "power_on_time": {
+  "hours": 7247
+ },
+ "nvme_error_information_log": {
+  "size": 64,
+  "read": 16,
+  "unread": 0
+ }
+}

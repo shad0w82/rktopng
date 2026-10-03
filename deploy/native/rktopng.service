@@ -1,0 +1,27 @@
+[Unit]
+Description=RkTopNG - RK3588 / CM3588 monitoring exporter and dashboard
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/rktopng
+EnvironmentFile=-/etc/rktopng/rktopng.env
+Restart=on-failure
+RestartSec=3
+
+# Root is needed for the debugfs-only data (NPU / RGA load, driver versions) and
+# to read SMART from the disks. Everything else works unprivileged: to run as a
+# normal user, replace "root" with that user (SATA temperature/health and NPU/RGA
+# load will then be missing).
+User=root
+
+# The service only reads system files, so lock down everything else.
+# (PrivateDevices must stay off: smartctl needs the real /dev/sdX, /dev/nvmeX.)
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ProtectControlGroups=true
+
+[Install]
+WantedBy=multi-user.target
