@@ -110,7 +110,7 @@ L'app (backend + interfaccia) è un singolo binario statico: non serve Docker. S
 Node (Node serve solo a compilare l'interfaccia):
 
 ```bash
-make build-arm64            # oppure: make build-amd64  → dist/rktopng-linux-<arch>
+make build-arm64            # → dist/rktopng-linux-arm64
 scp dist/rktopng-linux-arm64 deploy/native/{install.sh,rktopng.service,rktopng.env.example} utente@board:~/
 ssh utente@board 'sudo apt install -y smartmontools && sudo ./install.sh ./rktopng-linux-arm64'
 ```
@@ -131,6 +131,9 @@ make vet         # go vet + controllo dei tipi (svelte-check)
 make dev RKTOP_API=http://<ip-board>:9888   # interfaccia con ricarica a caldo, dati da una board vera
 make build-arm64 # un solo binario con l'interfaccia dentro → dist/
 ```
+
+Per pubblicare una versione (tag + release GitHub con i binari e le somme di controllo): `make release VERSION=0.1.1`
+e `make release-publish VERSION=0.1.1`, vedi [`docs/FUNZIONAMENTO.md` §8.5](docs/FUNZIONAMENTO.md).
 
 Il frontend (Svelte + Vite + TypeScript) è in `frontend/`; il build finisce in `exporter/web/dist` e il
 backend lo incorpora (`go:embed`). Dettagli in [`docs/FUNZIONAMENTO.md`](docs/FUNZIONAMENTO.md#6-il-frontend).

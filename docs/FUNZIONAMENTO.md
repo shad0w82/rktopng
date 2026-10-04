@@ -644,7 +644,7 @@ Lo stesso programma, due modi di eseguirlo.
 ### 7.1 Nativa (senza Docker)
 
 ```bash
-make build-arm64     # → dist/rktopng-linux-arm64   (make build-amd64 per x86-64)
+make build-arm64     # → dist/rktopng-linux-arm64
 scp dist/rktopng-linux-arm64 deploy/native/{install.sh,rktopng.service,rktopng.env.example} utente@board:~/rktopng-install/
 ssh -t utente@board 'cd ~/rktopng-install && sudo ./install.sh ./rktopng-linux-arm64'
 ```
@@ -743,7 +743,7 @@ costante. Poi:
  ├── docs/                      questa documentazione, data_sources.md, smart_status.md, color_thresholds.md
  ├── Dockerfile                 immagine con interfaccia + backend (3 fasi)
  ├── docker-compose.yml         il servizio exporter (interfaccia + backend)
- ├── Makefile                   test, vet, frontend, dev, build-arm64, build-amd64
+ ├── Makefile                   test, vet, frontend, dev, build-arm64, release, release-publish
  └── README.md
 ```
 
@@ -755,6 +755,8 @@ make vet             # go vet + svelte-check (tipi)
 make frontend        # compila l'interfaccia in exporter/web/dist
 make dev RKTOP_API=http://<ip-board>:9888   # interfaccia con ricarica a caldo, dati da una board vera
 make build-arm64     # UN binario statico con l'interfaccia dentro → dist/rktopng-linux-arm64
+make release VERSION=0.1.1           # prepara una release in dist/release/ (vedi §8.5)
+make release-publish VERSION=0.1.1   # crea la release su GitHub
 ```
 
 Servono Go 1.21 o più recente e Node 22 o più recente (solo per compilare l'interfaccia), entrambi
@@ -781,8 +783,29 @@ con l'app vera. Una compilazione Go "a mano" su un clone nuovo richiede prima `m
 
 ---
 
+### 8.5 Rilasciare una versione
+
+Una **release** è un tag git più una release GitHub con il binario statico `rktopng-linux-arm64` e il file
+`SHA256SUMS`. Da quegli stessi file nascono sia l'installazione nativa sia l'immagine Docker dello store CasaOS
+(che quindi contiene, byte per byte, il binario della release).
+
+```bash
+git tag v0.1.1 && git push origin main v0.1.1   # dopo aver committato tutto
+make release VERSION=0.1.1                      # test, controllo tipi, build, SHA256SUMS in dist/release/
+make release-publish VERSION=0.1.1              # crea la release pubblica con il binario e SHA256SUMS
+```
+
+`make release` si rifiuta di partire da un albero con modifiche non salvate o se il tag `v0.1.1` non punta al
+commit corrente; `make release-publish` si rifiuta se i file in `dist/release/` vengono da un altro commit o se il
+tag non è su `origin`, e ricontrolla le somme prima di pubblicare. **Un tag o una release pubblicati non si
+spostano né si cancellano**: una correzione è una nuova versione. Il passo successivo, l'immagine Docker, è
+descritto nello store CasaOS (`Apps/rktopng/docker/README.md`).
+
 ## 9. Decisioni di progetto e limiti noti
 
+- **Solo arm64 (RK3588)**: l'app legge file specifici di Rockchip (devfreq di NPU/GPU/DDR, `mpp_service`,
+  debugfs di RGA e NPU, i sensori della CM3588); su x86-64 non avrebbe senso, quindi non esiste una build
+  `amd64` né una release per quell'architettura.
 - **Tipo di DDR (LPDDR4X/5) non leggibile a runtime**: lo imposta il firmware prima del kernel. La UI
   mostra solo la dimensione (`16 GB`), senza il tipo.
 - **RAM "usata" = (total − available) / total**, come btop/htop, non (total − free) che conterebbe
