@@ -78,10 +78,13 @@ curl -fsSL https://get.docker.com | sudo sh
 sudo usermod -aG docker $USER   # poi ri-login
 ```
 
-Avvio (dalla cartella del progetto):
+Avvio (basta il file `docker-compose.yml`, il resto del progetto non serve):
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
+
+Scarica l'immagine pubblica `shad0w82/rktopng` da Docker Hub: Alpine con `smartmontools` e il binario della release
+con lo stesso numero di versione (solo arm64). Per aggiornare si cambia la versione in `image:` e si rilancia lo stesso comando.
 
 La dashboard è su `http://<board>:9888/` (con l'indirizzo Tailscale o LAN della board).
 
@@ -141,7 +144,7 @@ backend lo incorpora (`go:embed`). Dettagli in [`docs/FUNZIONAMENTO.md`](docs/FU
 ## Verifica veloce dell'exporter
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 curl -s localhost:9888/metrics | grep '^rk3588_' | head
 ```
 

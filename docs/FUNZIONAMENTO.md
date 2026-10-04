@@ -657,14 +657,17 @@ aggiornamenti) e abilita il servizio `rktopng` (come root: debugfs e SMART). Per
 ### 7.2 Docker
 
 ```bash
-docker compose up -d --build exporter
+docker compose up -d
 ```
 
-`docker-compose.yml` monta `/proc`, `/sys` e `/` dell'host, imposta le variabili `RKTOP_*_PATH` e usa
-`privileged: true` (serve per SMART e debugfs). Il `Dockerfile` (alla radice del repository, che è il
-contesto di build) ha tre fasi: **Node** compila l'interfaccia, **Go** compila il backend incorporandola,
-**Alpine** (con `smartmontools`) esegue il binario. Con l'interfaccia dentro, l'app è su
-`http://<board>:9888/`.
+`docker-compose.yml` scarica l'immagine pubblica `shad0w82/rktopng:<versione>` da Docker Hub (Alpine con
+`smartmontools` e il binario della release con lo stesso numero, solo arm64), monta `/proc`, `/sys` e `/` dell'host,
+imposta le variabili `RKTOP_*_PATH` e usa `privileged: true` (serve per SMART e debugfs). L'app è su
+`http://<board>:9888/`. Per aggiornare si cambia la versione in `image:` e si rilancia il comando.
+
+**L'immagine non si costruisce in questo repository**: non c'è un `Dockerfile` che compili dai sorgenti. La fa
+`build.sh`, nello store CasaOS (`Apps/rktopng/docker/`), a partire dal binario della release (vedi §8.5). Chi
+sviluppa usa Go e Node in locale (`make test`, `make dev`, `make build-arm64`).
 
 ### 7.3 Sicurezza
 
@@ -741,8 +744,7 @@ costante. Poi:
  ├── deploy/native/             unit systemd, install.sh, esempio di configurazione
  ├── tools/accel-loadtest/      carico su VPU/RGA/NPU e verifica dei numeri (da eseguire sulla board)
  ├── docs/                      questa documentazione, data_sources.md, smart_status.md, color_thresholds.md
- ├── Dockerfile                 immagine con interfaccia + backend (3 fasi)
- ├── docker-compose.yml         il servizio exporter (interfaccia + backend)
+ ├── docker-compose.yml         il servizio exporter, dall'immagine pubblica shad0w82/rktopng su Docker Hub
  ├── Makefile                   test, vet, frontend, dev, build-arm64, release, release-publish
  └── README.md
 ```
@@ -799,7 +801,9 @@ make release-publish VERSION=0.1.1              # crea la release pubblica con i
 commit corrente; `make release-publish` si rifiuta se i file in `dist/release/` vengono da un altro commit o se il
 tag non è su `origin`, e ricontrolla le somme prima di pubblicare. **Un tag o una release pubblicati non si
 spostano né si cancellano**: una correzione è una nuova versione. Il passo successivo, l'immagine Docker, è
-descritto nello store CasaOS (`Apps/rktopng/docker/README.md`).
+descritto nello store CasaOS (`Apps/rktopng/docker/README.md`). **Quando l'immagine è pubblicata**, si aggiorna il
+numero di versione in `image:` del `docker-compose.yml` di questo repository (e del compose dello store) e si
+committa: i compose si aggiornano per ultimi, così non puntano mai a un'immagine che non esiste ancora.
 
 ## 9. Decisioni di progetto e limiti noti
 

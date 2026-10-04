@@ -2,9 +2,10 @@ name: rktopng
 
 services:
   exporter:
-    build:
-      context: .                       # the repo root: the image builds both frontend/ and exporter/
-      dockerfile: Dockerfile
+    # Public image on Docker Hub: Alpine + smartmontools + the binary of the GitHub release with the
+    # same number (arm64 only: the app is made for the RK3588). To update, change the version and run
+    # `docker compose up -d` again.
+    image: shad0w82/rktopng:0.1.0
     container_name: rktopng-exporter
     restart: unless-stopped
     # Root + recursive bind mounts of host /proc and /sys let the exporter read
